@@ -1,0 +1,20 @@
+{
+  "files": {
+    "main.css": "/neu-form-1/static/css/main.9b8dda62.css",
+    "main.js": "/neu-form-1/static/js/main.50505e2a.js",
+    "static/js/239.6e0b9c23.chunk.js": "/neu-form-1/static/js/239.6e0b9c23.chunk.js",
+    "static/js/213.3088029c.chunk.js": "/neu-form-1/static/js/213.3088029c.chunk.js",
+    "static/js/455.b93efc79.chunk.js": "/neu-form-1/static/js/455.b93efc79.chunk.js",
+    "static/media/home-banner-nurse.jpg": "/neu-form-1/static/media/home-banner-nurse.4187a4847bd8808a8794.jpg",
+    "index.html": "/neu-form-1/index.html",
+    "main.9b8dda62.css.map": "/neu-form-1/static/css/main.9b8dda62.css.map",
+    "main.50505e2a.js.map": "/neu-form-1/static/js/main.50505e2a.js.map",
+    "239.6e0b9c23.chunk.js.map": "/neu-form-1/static/js/239.6e0b9c23.chunk.js.map",
+    "213.3088029c.chunk.js.map": "/neu-form-1/static/js/213.3088029c.chunk.js.map",
+    "455.b93efc79.chunk.js.map": "/neu-form-1/static/js/455.b93efc79.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.9b8dda62.css",
+    "static/js/main.50505e2a.js"
+  ]
+}
