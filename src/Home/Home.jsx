@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { db } from "../Firebase/config"; // Your Firebase config file
+import { db } from "../Firebase/config";
 import { collection, getDocs } from "firebase/firestore";
 import "./Home.css";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -7,10 +7,10 @@ import { Link, useNavigate } from "react-router-dom";
 
 function Home() {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [reports, setReports] = useState([]);
+  const [checkIns, setCheckIns] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedReporter, setSelectedReporter] = useState("All");
-  const [uniqueReporters, setUniqueReporters] = useState([]);
+  const [selectedWard, setSelectedWard] = useState("All");
+  const [uniqueWards, setUniqueWards] = useState([]);
   const navigate = useNavigate();
 
   const toggleDrawer = () => {
@@ -22,71 +22,43 @@ function Home() {
   };
 
   useEffect(() => {
-    const fetchReports = async () => {
+    const fetchCheckIns = async () => {
       try {
-        const reportsRef = collection(db, "Reports");
-        const currentDate = new Date();
-        const startOfToday = new Date(currentDate.setHours(0, 0, 0, 0));
-        const endOfToday = new Date(currentDate.setHours(23, 59, 59, 999));
-
-        const reportsSnapshot = await getDocs(reportsRef);
-        const reportsData = reportsSnapshot.docs.map((doc) => ({
+        setLoading(true);
+        const checkInsRef = collection(db, "RegisterData");
+        
+        const checkInsSnapshot = await getDocs(checkInsRef);
+        const checkInsData = checkInsSnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
+          checkInTime: doc.data().lastUpdated || new Date().toISOString()
         }));
 
-        const filteredReports = reportsData.filter((report) => {
-          const reportDate = new Date(report.submittedAt);
-          return reportDate >= startOfToday && reportDate <= endOfToday;
-        });
+        // Filter only checked-in patients (eventStatus === true)
+        const activeCheckIns = checkInsData.filter(checkin => checkin.eventStatus === true);
 
-        setReports(filteredReports);
-
-        // Extract unique reporters
-        const reporters = [...new Set(filteredReports.map((report) => report.team1))];
-        setUniqueReporters(["All", ...reporters]);
+        // Extract unique wards
+        const wards = [...new Set(activeCheckIns.map(checkin => checkin.wardNumber || "Unknown"))];
+        
+        setCheckIns(activeCheckIns);
+        setUniqueWards(["All", ...wards.filter(ward => ward !== "Unknown")]);
       } catch (error) {
-        console.error("Error fetching data: ", error);
+        console.error("Error fetching check-ins: ", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchReports();
+    fetchCheckIns();
   }, []);
 
-  const getReportDetailsRoute = (formType, reportId) => {
-    switch (formType) {
-      case "NHC":
-        return `/main/reportsdetailnhc/${reportId}`;
-      case "NHC(E)":
-        return `/main/reportsdetailnhce/${reportId}`;
-      case "DHC":
-        return `/main/report-details-dhc/${reportId}`;
-      case "PROGRESSION REPORT":
-        return `/main/report-details-progression/${reportId}`;
-      case "SOCIAL REPORT":
-        return `/main/report-details-social/${reportId}`;
-      case "VHC":
-        return `/main/report-details-vhc/${reportId}`;
-      case "GVHC":
-        return `/main/report-details-vhc/${reportId}`;
-      case "INVESTIGATION":
-        return `/main/report-details-investigation/${reportId}`;
-      case "DEATH":
-        return `/main/report-details-death/${reportId}`;
-      default:
-        return `/main/report-details-default/${reportId}`;
-    }
+  const handleWardChange = (event) => {
+    setSelectedWard(event.target.value);
   };
 
-  const handleReporterChange = (event) => {
-    setSelectedReporter(event.target.value);
-  };
-
-  const filteredReports = selectedReporter === "All"
-    ? reports
-    : reports.filter((report) => report.team1 === selectedReporter);
+  const filteredCheckIns = selectedWard === "All" 
+    ? checkIns 
+    : checkIns.filter(checkin => checkin.wardNumber === selectedWard);
 
   return (
     <div className="HomeApp">
@@ -103,15 +75,6 @@ function Home() {
           <i className="bi bi-arrow-left"></i>
         </button>
         <div className="drawer-content">
-          <Link to="/main/shameema-list" className="HomeDrawerButton">
-          SHAMEEMA
-          </Link>
-          <Link to="/main/divya-list" className="HomeDrawerButton">
-            DIVYA
-          </Link>
-          <Link to="/main/haseena-list" className="HomeDrawerButton">
-            HASEENA
-          </Link>
           <a
             href="https://neuraq.github.io/Palliative-Mkba-App-Contact/"
             target="_blank"
@@ -120,9 +83,6 @@ function Home() {
           >
             Contact Us
           </a>
-          <Link to="/main/medicine-list" className="HomeDrawerButton">
-            Medicine List
-          </Link>
         </div>
         <div className="drawer-footer">
           <button className="HomeDrawerButton btn-danger" onClick={handleLogout}>
@@ -134,61 +94,58 @@ function Home() {
 
       {/* Banner Section */}
       <div className="HomeBanner">
-        <h1>NURSES HOME</h1>
+        <h1>SNEHA SANGAMEM - NEURAQ </h1>
         <div className="HomeBannerButtons">
-          <Link to="/main/addpt" className="HomeBannerButton">
-            Register New Patients
-          </Link>
-          <Link to="/main/allrepots" className="HomeBannerButton">
-            Patients Reports
-          </Link>
+      
         </div>
       </div>
 
-      {/* Reports Section */}
-      <div className="HomeReports filter-section">
-        <h4 className="HomeReportsTitle">Reports From Today ({filteredReports.length})  <select
-            id="reporter-filter"
-            className="filter-section"
-            value={selectedReporter}
-            onChange={handleReporterChange}
-          >
-            {uniqueReporters.map((reporter) => (
-              <option key={reporter} value={reporter}>
-                {reporter}
-              </option>
-            ))}
-          </select></h4> 
-      
-        {loading ? (
-          <div className="loading-container">
-            <img
-              src="https://media.giphy.com/media/YMM6g7x45coCKdrDoj/giphy.gif"
-              alt="Loading..."
-              className="loading-image"
-            />
-          </div>
-        ) : filteredReports.length === 0 ? (
-          <p>No reports found for today.</p>
-        ) : (
-          <div className="HomeReportsCards">
-            {filteredReports.map((report) => (
-              <Link
-                to={getReportDetailsRoute(report.formType, report.id)}
-                className="HomeReportCardLink"
-                key={report.id}
+      {/* Check-ins Section */}
+      <div className="HomeCheckIns">
+        <div className="filter-section">
+          <h4 className="HomeCheckInsTitle">
+            Check-ins ({filteredCheckIns.length}) <select
+                id="ward-filter"
+                value={selectedWard}
+                onChange={handleWardChange}
               >
-                <div className="HomeReportCard">
-                  <img src="https://www.csdtitsolution.com/images/blogs/Chapitre_2.gif" alt="" />
-                  <div className="HomeReportInfo">
-                    <h5>{report.formType} : {report.name} </h5>
-                    <p></p>
-                    <small>{new Date(report.submittedAt).toLocaleString()} - REPORTED BY {report.team1}</small>
-                  </div>
-                </div>
-              </Link>
-            ))}
+                {uniqueWards.map((ward) => (
+                  <option key={ward} value={ward}>
+                    {ward}
+                  </option>
+                ))}
+              </select>
+          </h4>
+          <div className="filter-controls">
+            <div className="filter-group">
+              {/* <label htmlFor="ward-filter">Filter by Ward:</label> */}
+              
+            </div>
           </div>
+        </div>
+
+        {loading ? (
+          <div className="text-center mt-3">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        ) : (
+          <div className="checkin-list">
+  {filteredCheckIns.map((checkin) => (
+    <div className="checkin-card" key={checkin.id}>
+      <div className="checkin-icon">
+        <img src="https://cdn-icons-gif.flaticon.com/17861/17861454.gif" alt="icon" />
+      </div>
+      <div className="checkin-info">
+        <h5>{checkin.patientname?.toUpperCase() || "UNKNOWN"}</h5>
+        <p>{new Date(checkin.checkInTime).toLocaleString()}</p>
+        <p>Ward: {checkin.wardNumber || "N/A"}</p>
+      </div>
+    </div>
+  ))}
+</div>
+
         )}
       </div>
     </div>

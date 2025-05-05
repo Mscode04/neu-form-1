@@ -98,21 +98,21 @@ const LoginPage = ({ setIsAuthenticated, setIsNurse }) => {
         <div className="form-group">
           <label>Email:</label>
           <input
-            type="email"
+            type="text"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter your email"
-            required
+            
           />
         </div>
         <div className="form-group">
           <label>Password:</label>
           <input
-            type="password"
+            type="text"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Enter your password"
-            required
+            
           />
         </div>
         {error && <p className="error-message">{error}</p>}

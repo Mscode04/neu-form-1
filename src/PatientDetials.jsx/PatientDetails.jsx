@@ -1,687 +1,342 @@
-import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { doc, getDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../Firebase/config";
-import { doc, getDoc } from "firebase/firestore";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import "./PatientDetails.css";
-import { collection, query, where, getDocs,deleteDoc } from "firebase/firestore";
-
-const PatientDetails = () => {
-  const { patientId } = useParams(); // Getting patientId from the URL
-  const [patient, setPatient] = useState(null);
-  const [medicines, setMedicines] = useState([]);
-  const [equipments, setEquipments] = useState([]);
-  const [conditions, setConditions] = useState([]);
-  const [familyDetails, setFamilyDetails] = useState([]); // State for family details
+import './PatientDetails.css'
+const PatientDetail = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
-
-  // Fetching patient details
-  const fetchPatient = async () => {
-    try {
-      const docRef = doc(db, "Patients", patientId); // Fetch patient document based on patientId from URL
-      const docSnap = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        const patientData = docSnap.data();
-        setPatient(patientData);
-        if (patientData.familyDetails) {
-          setFamilyDetails(patientData.familyDetails); // Set family details if available
-        }
-      } else {
-        console.log("No such document!");
-      }
-    } catch (error) {
-      console.error("Error fetching patient details: ", error);
-    }
-  };
-  
-  // Fetching medicines related to this patient
-  const fetchMedicines = async () => {
-    try {
-      if (patient) {
-        const medicinesRef = collection(db, "Medicines");
-        const q = query(medicinesRef, where("patientId", "==", patient.patientId));
-        const querySnapshot = await getDocs(q);
-        const medicinesData = querySnapshot.docs.map((doc) => doc.data());
-        const allMedicines = medicinesData.flatMap((data) => data.medicines || []);
-        setMedicines(allMedicines);
-      }
-    } catch (error) {
-      console.error("Error fetching medicines: ", error);
-    }
-  };
-
-  // Fetching equipments related to this patient
-  const fetchEquipments = async () => {
-    try {
-      if (patient) {
-        const equipmentsRef = collection(db, "Equipments");
-        const q = query(equipmentsRef, where("patientId", "==", patient.patientId));
-        const querySnapshot = await getDocs(q);
-        const equipmentsData = querySnapshot.docs.map((doc) => doc.data());
-        setEquipments(equipmentsData);
-      }
-    } catch (error) {
-      console.error("Error fetching equipments: ", error);
-    }
-  };
-
-  // Fetching conditions related to this patient
-  const fetchConditions = async () => {
-    try {
-      if (patient) {
-        const conditionsRef = collection(db, "Conditions");
-        const q = query(conditionsRef, where("patientId", "==", patient.patientId));
-        const querySnapshot = await getDocs(q);
-        const conditionsData = querySnapshot.docs.map((doc) => doc.data());
-        setConditions(conditionsData);
-      }
-    } catch (error) {
-      console.error("Error fetching conditions: ", error);
-    }
-  };
+  const [patient, setPatient] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    fetchPatient(); // Fetch patient details
-  }, [patientId]); // Re-run when patientId changes
-
-  useEffect(() => {
-    if (patient) {
-      fetchMedicines();
-      fetchEquipments();
-      fetchConditions();
-
-    }
-  }, [patient]); // Re-run when patient data is set
-
-  if (!patient) {
-    return <div className="loading-container">
-      <img
-        src="https://media.giphy.com/media/YMM6g7x45coCKdrDoj/giphy.gif"
-        alt="Loading..."
-        className="loading-image"
-      />
-    </div>;
-  }
-  const deletePatient = async () => {
-    const confirmationCode = prompt("Please enter the confirmation code to delete this patient:");
-    if (confirmationCode === "2012") {
+    const fetchPatient = async () => {
       try {
-        await deleteDoc(doc(db, "Patients", patientId));
-        alert("Patient deleted successfully!");
-        navigate("/main"); // Redirect to the main page after deletion
-      } catch (error) {
-        console.error("Error deleting patient: ", error);
-        alert("Failed to delete patient.");
-      }
-    } else {
-      alert("Incorrect confirmation code. Deletion canceled.");
-    }
-  };
+        const docRef = doc(db, "RegisterData", id);
+        const docSnap = await getDoc(docRef);
 
-  const exportToPrint = (patient) => {
-    const printWindow = window.open("", "_blank");
+        if (docSnap.exists()) {
+          setPatient({ id: docSnap.id, ...docSnap.data() });
+        } else {
+          setNotFound(true);
+        }
+      } catch (error) {
+        console.error("Error fetching patient detail:", error);
+        setNotFound(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPatient();
+  }, [id]);
+
+  const handlePrint = () => {
+    const printWindow = window.open('', '', 'width=800,height=600');
     printWindow.document.write(`
       <html>
         <head>
-          <title>Patient Report - ${patient.name}</title>
+          <title>Patient Report - ${patient?.palliativeId || id}</title>
           <style>
-            body {
-              font-family: Arial, sans-serif;
-              margin: 10px;
-              font-size: 12px;
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            .report-header { 
+              background-color: #034f73; 
+              color: white; 
+              padding: 20px; 
+              text-align: center; 
+              margin-bottom: 20px;
             }
-            h1 {
-              font-size: 18px;
-              color: #283593;
-              margin-bottom: 15px;
+            .patient-info { margin-bottom: 30px; }
+            .section { 
+              margin-bottom: 20px; 
+              border-bottom: 1px solid #ddd; 
+              padding-bottom: 15px;
             }
-            .section-header {
-              font-size: 14px;
-              background-color: #d3d3d3;
-              padding: 5px;
-              margin-top: 10px;
-              margin-bottom: 5px;
-              page-break-after: avoid;
+            .section h4 { 
+              color: #034f73; 
+              border-bottom: 2px solid #009e8c; 
+              padding-bottom: 5px;
             }
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              margin-bottom: 10px;
+            .info-row { display: flex; margin-bottom: 8px; }
+            .info-label { font-weight: bold; width: 200px; }
+            .print-footer { 
+              text-align: center; 
+              margin-top: 30px; 
+              font-size: 12px; 
+              color: #666;
             }
-            table, th, td {
-              border: 1px solid #ddd;
-            }
-            th, td {
-              padding: 6px;
-              text-align: left;
-              font-size: 12px;
-            }
-            th {
-              background-color: #f5f5f5;
-            }
-            tr:nth-child(even) {
-              background-color: #f9f9f9;
-            }
-            .section {
-              page-break-before: auto;
-              page-break-inside: auto;
-            }
-            @media print {
-              body {
-                margin: 0;
-                padding: 0;
-              }
-              .section {
-                page-break-inside: avoid;
-                page-break-after: auto;
-              }
-              table {
-                page-break-before: auto;
-              }
-              thead {
-                display: table-header-group;
-              }
-              tfoot {
-                display: table-footer-group;
-              }
-            }
+            @page { size: auto; margin: 10mm; }
           </style>
         </head>
         <body>
+          <div class="report-header">
+            <h2>Palliative Care Patient Report</h2>
+            <h3>${patient?.patientname || 'Patient'}</h3>
+            <p>ID: ${patient?.palliativeId || id} | Date: ${new Date().toLocaleDateString()}</p>
+          </div>
           
-    `);
+          <div class="patient-info">
+            <div class="section">
+              <h4>Basic Information</h4>
+              <div class="info-row"><span class="info-label">Patient Name:</span> ${patient?.patientname || '-'}</div>
+              <div class="info-row"><span class="info-label">Palliative ID:</span> ${patient?.palliativeId || '-'}</div>
+              <div class="info-row"><span class="info-label">Address:</span> ${patient?.address || '-'}</div>
+              <div class="info-row"><span class="info-label">Place:</span> ${patient?.place || '-'}</div>
+              <div class="info-row"><span class="info-label">Panchayat:</span> ${patient?.panchayat || '-'}</div>
+              <div class="info-row"><span class="info-label">Ward Number:</span> ${patient?.wardNumber || '-'}</div>
+            </div>
 
-    const addSectionHeader = (text) => {
-      printWindow.document.write(`
-        <div class="section-header">${text}</div>
-      `);
-    };
+            <div class="section">
+              <h4>Care Requirements</h4>
+              <div class="info-row"><span class="info-label">Equipment Needed:</span> ${patient?.equipmentRequired || '-'}</div>
+              <div class="info-row"><span class="info-label">Medicine Requirements:</span> ${patient?.medicine || '-'}</div>
+              <div class="info-row"><span class="info-label">Food Requirements:</span> ${patient?.food || '-'}</div>
+            </div>
 
-    const addTable = (data, headers) => {
-      printWindow.document.write(`
-        <table>
-          <thead>
-            <tr>
-              ${headers.map((header) => `<th>${header}</th>`).join("")}
-            </tr>
-          </thead>
-          <tbody>
-            ${data
-              .map(
-                (row) => `
-              <tr>
-                ${row
-                  .map(
-                    (cell) => `
-                  <td>${cell || "N/A"}</td>
-                `
-                  )
-                  .join("")}
-              </tr>
-            `
-              )
-              .join("")}
-          </tbody>
-        </table>
-      `);
-    };
+            <div class="section">
+              <h4>Transportation</h4>
+              <div class="info-row"><span class="info-label">Vehicle:</span> ${patient?.vehicle || '-'}</div>
+              <div class="info-row"><span class="info-label">Leaving Time:</span> ${patient?.leavingTime || '-'}</div>
+            </div>
 
-    // Personal Details Section
-    printWindow.document.write('<div class="section"><h1>Patient Profile</h1>');
-    addSectionHeader("Personal Details");
-    addTable(
-      [
-        ["Reg No", patient.registernumber],
-        ["Name", patient.name],
-        ["Registration Date", patient.registrationDate],
-        ["Address", patient.address],
-        ["Location", patient.location],
-        ["Ward", patient.ward],
-        ["Age", patient.age],
-        ["Gender", patient.gender],
-        ["Category", patient.category],
-        ["Medical History", patient.medicalHistory],
-        ["Main Diagnosis", patient.mainDiagnosis],
-        ["Date of Birth", patient.dob],
-        ["Current Difficulties", patient.currentDifficulties],
-        ["Email", patient.email],
-        ["Main Caretaker", patient.mainCaretaker],
-        ["Main Caretaker Phone", patient.mainCaretakerPhone],
-        ["Neighbour Name", patient.neighbourName],
-        ["Neighbour Phone", patient.neighbourPhone],
-        ["Panchayat", patient.panchayat],
-        ["Patient ID", patient.patientId],
-        ["Relative Phone", patient.relativePhone],
-        ["Referral Person", patient.referralPerson],
-        ["Referral Phone", patient.referralPhone],
-        ["Community Volunteer", patient.communityVolunteer],
-        ["Community Volunteer Phone", patient.communityVolunteerPhone],
-        ["Ward Member", patient.wardMember],
-        ["Ward Member Phone", patient.wardMemberPhone],
-        ["Asha Worker", patient.ashaWorker],
-        ["Status", patient.deactivated ? "INACTIVE" : "ACTIVE"],
-      ],
-      ["Field", "Value"]
-    );
-    printWindow.document.write('</div>');
+            <div class="section">
+              <h4>Contacts</h4>
+              <div class="info-row"><span class="info-label">Bystander Name:</span> ${patient?.bystander?.name || '-'}</div>
+              <div class="info-row"><span class="info-label">Bystander Phone 1:</span> ${patient?.bystander?.phone1 || '-'}</div>
+              <div class="info-row"><span class="info-label">Bystander Phone 2:</span> ${patient?.bystander?.phone2 || '-'}</div>
+            </div>
 
-    // Family Details Section
-    if (patient.familyDetails && patient.familyDetails.length > 0) {
-      printWindow.document.write('<div class="section">');
-      addSectionHeader("Family Details");
-      addTable(
-        patient.familyDetails.map((family) => [
-          family.name,
-          family.relation,
-          family.age,
-          family.education,
-          family.income,
-          family.marriageStatus,
-          family.remark,
-        ]),
-        ["Name", "Relation", "Age", "Education", "Income", "Marriage Status", "Remark"]
-      );
-      printWindow.document.write('</div>');
-    }
+            <div class="section">
+              <h4>Care Team</h4>
+              <div class="info-row"><span class="info-label">Patient Volunteer:</span> ${patient?.patientVolunteer?.name || '-'} (${patient?.patientVolunteer?.phone || '-'})</div>
+              <div class="info-row"><span class="info-label">Incharge Volunteer:</span> ${patient?.inchargeVolunteer?.name || '-'} (${patient?.inchargeVolunteer?.phone || '-'})</div>
+              <div class="info-row"><span class="info-label">Ward Coordinator:</span> ${patient?.wardCoordinator?.name || '-'} (${patient?.wardCoordinator?.phone || '-'})</div>
+            </div>
 
-    // Medicines Section
-    if (patient.medicines && patient.medicines.length > 0) {
-      printWindow.document.write('<div class="section">');
-      addSectionHeader("Medicines");
-      addTable(
-        patient.medicines.map((medicine) => [
-          medicine.medicineName,
-          medicine.quantity,
-          medicine.time,
-          medicine.patientsNow ? "Show" : "Hide",
-        ]),
-        ["Medicine Name", "Quantity", "Time", "Show"]
-      );
-      printWindow.document.write('</div>');
-    }
+            <div class="section">
+              <h4>Additional Information</h4>
+              <div class="info-row"><span class="info-label">People With Patient:</span> Adults: ${patient?.peopleWithYou?.adults || 0}, Children: ${patient?.peopleWithYou?.children || 0}</div>
+              <div class="info-row"><span class="info-label">Remarks:</span> ${patient?.remarks || '-'}</div>
+            </div>
+          </div>
 
-    // Equipments Section
-    if (patient.equipments && patient.equipments.length > 0) {
-      printWindow.document.write('<div class="section">');
-      addSectionHeader("Equipments");
-      addTable(
-        patient.equipments.map((equipment) => [
-          equipment.equipmentName,
-          equipment.providedDate,
-          equipment.returnDate,
-          equipment.damage ? "Yes" : "No",
-        ]),
-        ["Equipment Name", "Provided Date", "Return Date", "Damage"]
-      );
-      printWindow.document.write('</div>');
-    }
-
-    // Conditions Section
-    if (patient.conditions && patient.conditions.length > 0) {
-      printWindow.document.write('<div class="section">');
-      addSectionHeader("Conditions");
-      addTable(
-        patient.conditions.map((condition) => [condition.conditionName]),
-        ["Condition Name"]
-      );
-      printWindow.document.write('</div>');
-    }
-
-    printWindow.document.write(`
+          <div class="print-footer">
+            <p>Generated on ${new Date().toLocaleString()} | Palliative Care Management System</p>
+          </div>
         </body>
       </html>
     `);
     printWindow.document.close();
-
+    printWindow.focus();
     setTimeout(() => {
       printWindow.print();
-    }, 500); // Ensures the content is fully loaded before printing
-};
+      printWindow.close();
+    }, 500);
+  };
 
- 
+  const handleDelete = async () => {
+    const pin = prompt("Enter PIN to delete:");
+    if (pin !== "2012") {
+      alert("Incorrect PIN. Deletion cancelled.");
+      return;
+    }
+
+    try {
+      await deleteDoc(doc(db, "RegisterData", id));
+      alert("Patient record deleted successfully.");
+      navigate("/");
+    } catch (err) {
+      alert("Failed to delete patient.");
+      console.error("Delete error:", err);
+    }
+  };
+
+  const handleUpdate = () => {
+    navigate(`/main/update-patient/${id}`);
+  };
+
+  if (loading) {
+    return (
+      <div className="text-center mt-5">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (notFound || !patient) {
+    return (
+      <div className="container mt-5 text-center">
+        <h4 className="text-danger">
+          <i className="bi bi-exclamation-triangle me-2"></i>
+          Patient {id} not found!
+        </h4>
+        <button className="btn btn-secondary mt-3" onClick={() => navigate(-1)}>
+          Go Back
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="PTDetail-container">
-      <button className="PTDetail-backButton" onClick={() => navigate(-1)}>
-        &#8592; Back
-      </button>
-      <h2>Patient Details</h2>
-      <div className="PTDetail-card">
-        <div className="PTDetail-profileHeader">
-          <img
-            src={patient.profilePic || "https://cliply.co/wp-content/uploads/2020/10/442010811_HEADPHONES_AVATAR_3D_400px.gif"}
-            alt="Profile"
-            className="PTDetail-profileImg"
-          />
-          <h3>{patient.name || "N/A"}</h3>
+    <div className="patient-detail-container">
+      <div className="patient-header">
+        <div>
+          <button className="btn btn-back" onClick={() => navigate(-1)}>
+            <i className="bi bi-arrow-left"></i> Back
+          </button>
         </div>
-
-        {/* Patient Information Table */}
-        <div className="PTDetail-infoTable">
-          <table>
-            <tbody>
-              <tr>
-                <td><strong>Reg No:</strong></td>
-                <td>{patient.registernumber || "N/A"}</td>
-              </tr>
-              <tr>
-                <td><strong>Registration Date:</strong></td>
-                <td>{patient.registrationDate || "N/A"}</td>
-              </tr>
-              <tr>
-                <td><strong>Address:</strong></td>
-                <td>{patient.address || "N/A"}</td>
-              </tr>
-              <tr>
-                <td><strong>Location:</strong></td>
-                <td>{patient.location || "N/A"}</td>
-              </tr>
-              <tr>
-                <td><strong>Ward:</strong></td>
-                <td>{patient.ward || "N/A"}</td>
-              </tr>
-              <tr>
-                <td><strong>Age:</strong></td>
-                <td>{patient.age || "N/A"}</td>
-              </tr>
-              <tr>
-                <td><strong>Gender:</strong></td>
-                <td>{patient.gender || "N/A"}</td>
-              </tr>
-              <tr>
-                <td><strong>Category:</strong></td>
-                <td>{patient.category || "N/A"}</td>
-              </tr>
-            
-              <tr>
-                <td><strong>Date of Birth:</strong></td>
-                <td>{patient.dob || "N/A"}</td>
-              </tr>
-             
-              <tr>
-                <td><strong>Current Difficulties:</strong></td>
-                <td>{patient.currentDifficulties || "N/A"}</td>
-              </tr>
-              <tr>
-                <td><strong>Email:</strong></td>
-                <td>{patient.email || "N/A"}</td>
-              </tr>
-              <tr>
-                <td><strong>Main Caretaker:</strong></td>
-                <td>{patient.mainCaretaker || "N/A"}</td>
-              </tr>
-              <tr>
-                <td><strong>Main Caretaker Phone:</strong></td>
-                <td>{patient.mainCaretakerPhone || "N/A"}</td>
-              </tr>
-              <tr>
-                <td><strong>Main Diagnosis:</strong></td>
-                <td>{patient.mainDiagnosis || "N/A"}</td>
-              </tr>
-              <tr>
-                <td><strong>Medical History:</strong></td>
-                <td>{patient.medicalHistory || "N/A"}</td>
-              </tr>
-              <tr>
-                <td><strong>Neighbour Name:</strong></td>
-                <td>{patient.neighbourName || "N/A"}</td>
-              </tr>
-              <tr>
-                <td><strong>Neighbour Phone:</strong></td>
-                <td>{patient.neighbourPhone || "N/A"}</td>
-              </tr>
-              <tr>
-                <td><strong>Panchayat:</strong></td>
-                <td>{patient.panchayat || "N/A"}</td>
-              </tr>
-              <tr>
-                <td><strong>Patient ID:</strong></td>
-                <td>{patient.patientId || "N/A"}</td>
-              </tr>
-              <tr>
-                <td><strong>Relative Phone:</strong></td>
-                <td>{patient.relativePhone || "N/A"}</td>
-              </tr>
-            
-              <tr>
-                <td><strong>Nurse Note:</strong></td>
-                <td>{patient.additionalInfo || "N/A"}</td>
-              </tr>
-              <tr>
-                <td><strong>Docter Advice:</strong></td>
-                <td>{patient.advice || "N/A"}</td>
-              </tr>
-              <tr>
-                <td><strong>Docter Examinations:</strong></td>
-                <td>{patient.examinations || "N/A"}</td>
-              </tr>
-              <tr>
-                <td><strong>Docter Note:</strong></td>
-                <td>{patient.note || "N/A"}</td>
-              </tr>
-              <tr>
-                <td><strong>Submited Date & Time:</strong></td>
-                <td>{patient.registerTime ? new Date(patient.registerTime).toLocaleString() : "N/A"}</td>
-              </tr>
-              <tr>
-                <td><strong>Referral Person:</strong></td>
-                <td>{patient.referralPerson || "N/A"}</td>
-              </tr>
-              <tr>
-                <td><strong>Referral Phone:</strong></td>
-                <td>{patient.referralPhone || "N/A"}</td>
-              </tr>
-              <tr>
-                <td><strong>Community Volunteer:</strong></td>
-                <td>{patient.communityVolunteer || "N/A"}</td>
-              </tr>
-              <tr>
-                <td><strong>Community Volunteer Phone:</strong></td>
-                <td>{patient.communityVolunteerPhone || "N/A"}</td>
-              </tr>
-              <tr>
-                <td><strong>Ward Member:</strong></td>
-                <td>{patient.wardMember || "N/A"}</td>
-              </tr>
-              <tr>
-                <td><strong>Ward Member Phone:</strong></td>
-                <td>{patient.wardMemberPhone || "N/A"}</td>
-              </tr>
-              <tr>
-                <td><strong>Asha Worker:</strong></td>
-                <td>{patient.ashaWorker || "N/A"}</td>
-              </tr>
-              <tr>
-                <td><strong>STATUS:</strong></td>
-                <td style={{ display: "flex", alignItems: "center", gap: "8px", color: patient.deactivated ? "red" : "green" }}>
-                  <span
-                    style={{
-                      width: "10px",
-                      height: "10px",
-                      borderRadius: "50%",
-                      backgroundColor: patient.deactivated ? "red" : "green",
-                      display: "inline-block",
-                    }}
-                  ></span>
-                  {patient.deactivated ? "INACTIVE" : "ACTIVE"}
-                </td>
-              </tr>
-
-            </tbody>
-          </table>
+        <h2>Patient Details</h2>
+        <div className="action-buttons">
+          <button className="btn btn-print" onClick={handlePrint}>
+            <i className="bi bi-printer"></i> Print Report
+          </button>
+          <button className="btn btn-update" onClick={handleUpdate}>
+            <i className="bi bi-pencil"></i> Update
+          </button>
+          <button className="btn btn-delete" onClick={handleDelete}>
+            <i className="bi bi-trash"></i> Delete
+          </button>
         </div>
+      </div>
 
-        <div className="PTDetail-equipmentsContainer">
-          <h3>Family Details</h3>
-          {conditions.length > 0 ? (
-            <table>
-              <thead>
-                <tr>
-                  <th> Family Details</th>
-                </tr>
-              </thead>
-              <tbody>
-                {conditions.map((condition, index) => (
-                  <tr key={index}>
-                    <td>{condition.conditionName}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p>No conditions found for this patient.</p>
-          )}
-        </div>
-
-        {/* Medicines Section */}
-        <div className="PTDetail-medicinesContainer">
-          <h3>Medicines</h3>
-          {medicines.length > 0 ? (
-            <table>
-              <thead>
-                <tr>
-                  <th>Medicine Name</th>
-                  <th>Quantity</th>
-                  <th>Time</th>
-                  <th>Show</th>
-                </tr>
-              </thead>
-              <tbody>
-                {medicines.map((medicine, index) => (
-                  <tr key={index}>
-                    <td>{medicine.medicineName}</td>
-                    <td>{medicine.quantity}</td>
-                    <td>{medicine.time}</td>
-                    <td>{medicine.patientsNow ? "Show" : "Hide"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p>No medicines found for this patient.</p>
-          )}
-        </div>
-
-
-
-        {/* Family Details Section */}
-        <div className="PTDetail-familyDetails">
-          <h3>Family Details</h3>
-          {familyDetails.length > 0 ? (
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Relation</th>
-                  <th>Age</th>
-                  <th>Education</th>
-                  <th>Income</th>
-                  <th>Marriage Status</th>
-                  <th>Remark</th>
-                </tr>
-              </thead>
-              <tbody>
-                {familyDetails.map((family, index) => (
-                  <tr key={index}>
-                    <td>{family.name || "N/A"}</td>
-                    <td>{family.relation || "N/A"}</td>
-                    <td>{family.age || "N/A"}</td>
-                    <td>{family.education || "N/A"}</td>
-                    <td>{family.income || "N/A"}</td>
-                    <td>{family.marriageStatus || "N/A"}</td>
-                    <td>{family.remark || "N/A"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p>No family details found for this patient.</p>
-          )}
-        </div>
-
-
-        {/* Equipments Section */}
-        <div className="PTDetail-equipmentsContainer">
-          <h3>Equipments</h3>
-          {equipments.length > 0 ? (
-            <table>
-              <thead>
-                <tr>
-                  <th>Equipment Name</th>
-                  <th>Provided Date</th>
-                  <th>Return Date</th>
-                  <th>Damage</th>
-                </tr>
-              </thead>
-              <tbody>
-                {equipments.map((equipment, index) => (
-                  <tr key={index}>
-                    <td>{equipment.equipmentName}</td>
-                    <td>{equipment.providedDate}</td>
-                    <td>{equipment.returnDate}</td>
-                    <td>{equipment.damage ? "Yes" : "No"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p>No equipments found for this patient.</p>
-          )}
-        </div>
-
-
-
-        {/* Reports Section */}
-        <Link to={`/main/reports/${patient.patientId}`} className="PTDetail-reportsLink">
-          <div className="PTDetail-reportsContainer">
-            <img src="https://cdn.dribbble.com/users/1015854/screenshots/3569620/day270_doctor-and-patient_1_2.gif" alt="" />
-            <h3> Reports of the Patient</h3>
-
+      <div className="patient-card">
+        <div className="section basic-info">
+          <h3 className="section-title">
+            <i className="bi bi-person-circle"></i> Basic Information
+          </h3>
+          <div className="info-grid">
+            <div className="info-item">
+              <span className="info-label non-selectable">Patient Name:</span>
+              <span className="info-value non-selectable non-selectable">{patient.patientname}</span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">Palliative ID:</span>
+              <span className="info-value non-selectable">{patient.palliativeId}</span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">Place:</span>
+              <span className="info-value non-selectable">{patient.place}</span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">Address:</span>
+              <span className="info-value non-selectable">{patient.address}</span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">Panchayat:</span>
+              <span className="info-value non-selectable">{patient.panchayat}</span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">Ward Number:</span>
+              <span className="info-value non-selectable">{patient.wardNumber}</span>
+            </div>
           </div>
-        </Link>
-
-        {/* Action Buttons */}
-        <div className="PTDetail-buttonsContainer">
-          <Link to={`/main/nhc/${patient.patientId}`} className="PTDetail-actionBtn PTDetail-smallBtn">NHC</Link>
-          <Link to={`/main/dhc/${patient.patientId}`} className="PTDetail-actionBtn PTDetail-smallBtn">DHC</Link>
-          <Link to={`/main/nhce/${patient.patientId}`} className="PTDetail-actionBtn PTDetail-smallBtn">NHC(E)</Link>
-          <Link to={`/main/prograssion/${patient.patientId}`} className="PTDetail-actionBtn PTDetail-smallBtn">Progression Report</Link>
-          <Link to={`/main/death/${patient.patientId}`} className="PTDetail-actionBtn PTDetail-smallBtn">Death Report</Link>
-          <Link to={`/main/vhc/${patient.patientId}`} className="PTDetail-actionBtn PTDetail-smallBtn">VHC</Link>
-          <Link to={`/main/medicine/${patient.patientId}`} className="PTDetail-actionBtn PTDetail-smallBtn">Medicine</Link>
-          <Link to={`/main/equpment/${patient.patientId}`} className="PTDetail-actionBtn PTDetail-smallBtn">Equipment</Link>
-          {/* <Link to={`/main/fmtree/${patient.patientId}`} className="PTDetail-actionBtn PTDetail-smallBtn">FM TREE</Link> */}
-          <Link to={`/main/invest/${patient.patientId}`} className="PTDetail-actionBtn PTDetail-smallBtn">Investigation</Link>
-          <Link to={`/main/social/${patient.patientId}`} className="PTDetail-actionBtn PTDetail-smallBtn">Social Support</Link>
-          <Link to={`/main/deactive/${patient.patientId}`} className="PTDetail-actionBtn PTDetail-smallBtn">DEACTIVE</Link>
-          <Link to={`/main/conditions/${patient.patientId}`} className="PTDetail-actionBtn PTDetail-smallBtn">Family Details</Link>
         </div>
-        {/* Update Button */}
-        <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
-  <button 
-    className="PTDetail-updateButton" 
-    style={{ flex: 6 }} // 5 parts for Update button
-    onClick={() => navigate(`/main/update-patient/${patientId}`)}
-  >
-    Update Patient Details
-  </button>
-  <button 
-    className="PTDetail-deleteButton" 
-    style={{ flex: 1 }} // 1 part for Delete button
-    onClick={deletePatient}
-  >
-    Delete 
-  </button>
-  <button 
-    className="PTDetail-deleteButton2" 
-    style={{ flex: 1 }} // 1 part for Print button
-    onClick={() => exportToPrint(patient)}
-  >
-    Print 
-  </button>
-</div>
+
+        <div className="section care-requirements">
+          <h3 className="section-title">
+            <i className="bi bi-clipboard2-pulse"></i> Care Requirements
+          </h3>
+          <div className="info-grid">
+            <div className="info-item">
+              <span className="info-label">Equipment Required:</span>
+              <span className="info-value non-selectable">{patient.equipmentRequired || '-'}</span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">Medicine:</span>
+              <span className="info-value non-selectable">{patient.medicine || '-'}</span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">Food:</span>
+              <span className="info-value non-selectable">{patient.food || '-'}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="section transportation">
+          <h3 className="section-title">
+            <i className="bi bi-truck"></i> Transportation
+          </h3>
+          <div className="info-grid">
+            <div className="info-item">
+              <span className="info-label">Vehicle:</span>
+              <span className="info-value non-selectable">{patient.vehicle || '-'}</span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">Leaving Time:</span>
+              <span className="info-value non-selectable">{patient.leavingTime || '-'}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="section contacts">
+          <h3 className="section-title">
+            <i className="bi bi-telephone"></i> Contacts
+          </h3>
+          <div className="info-grid">
+            <div className="info-item">
+              <span className="info-label">Bystander Name:</span>
+              <span className="info-value non-selectable">{patient.bystander?.name || '-'}</span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">Phone 1:</span>
+              <span className="info-value non-selectable">{patient.bystander?.phone1 || '-'}</span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">Phone 2:</span>
+              <span className="info-value non-selectable">{patient.bystander?.phone2 || '-'}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="section care-team">
+          <h3 className="section-title">
+            <i className="bi bi-people"></i> Care Team
+          </h3>
+          <div className="info-grid">
+            <div className="info-item">
+              <span className="info-label">Patient Volunteer:</span>
+              <span className="info-value non-selectable">
+                {patient.patientVolunteer?.name || '-'} ({patient.patientVolunteer?.phone || '-'})
+              </span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">Incharge Volunteer:</span>
+              <span className="info-value non-selectable">
+                {patient.inchargeVolunteer?.name || '-'} ({patient.inchargeVolunteer?.phone || '-'})
+              </span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">Ward Coordinator:</span>
+              <span className="info-value non-selectable">
+                {patient.wardCoordinator?.name || '-'} ({patient.wardCoordinator?.phone || '-'})
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="section additional-info">
+          <h3 className="section-title">
+            <i className="bi bi-info-circle"></i> Additional Information
+          </h3>
+          <div className="info-grid">
+            <div className="info-item">
+              <span className="info-label">People With Patient:</span>
+              <span className="info-value non-selectable">
+                Adults: {patient.peopleWithYou?.adults || 0}, Children: {patient.peopleWithYou?.children || 0}
+              </span>
+            </div>
+            <div className="info-item full-width">
+              <span className="info-label">Remarks:</span>
+              <span className="info-value non-selectable">{patient.remarks || '-'}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
-export default PatientDetails;
+export default PatientDetail;

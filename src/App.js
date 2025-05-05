@@ -61,11 +61,11 @@ function App() {
 
 
 
-  
+
   return (
     <>
       {/* Render the install button if the prompt is available */}
-      {installPrompt && (
+      {/* {installPrompt && (
         <div style={{ position: "fixed", top: "10px", right: "10px", zIndex: 1000 }}>
           <button
             onClick={handleInstallClick}
@@ -81,7 +81,7 @@ function App() {
             Install App
           </button>
         </div>
-      )}
+      )} */}
 
       <Routes>
         {/* Login Page */}

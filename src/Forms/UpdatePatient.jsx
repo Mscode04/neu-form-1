@@ -1,619 +1,440 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { db } from "../Firebase/config";
+import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import "./AddPatient.css"; // Reuse the same CSS file
+import { db } from "../Firebase/config";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const UpdatePatient = () => {
-  const { patientId } = useParams(); // Get patientId from the URL
+  const { id } = useParams();
   const navigate = useNavigate();
-  const [patientData, setPatientData] = useState({
-    profile: {
-      name: "",
-      registernumber: "",
-      age: "",
-      gender: "",
-      category: "",
-      address: "",
-      email: "",
-      password: "",
-      dob: "",
-      location: "",
-      panchayat: "",
-      ward: "",
-      mainCaretaker: "",
-      mainCaretakerPhone: "",
-      relativePhone: "",
-      referralPerson: "",
-      referralPhone: "",
-      neighbourName: "",
-      neighbourPhone: "",
-      communityVolunteer: "",
-      communityVolunteerPhone: "",
-      wardMember: "",
-      wardMemberPhone: "",
-      ashaWorker: "",
-      additionalInfo: "",
-    },
-    medical: {
-      medicalHistory: "",
-      currentDifficulties: "",
-      mainDiagnosis: "",
-    },
-    doctor: {
-      advice: "",
-      note: "",
-      examinations: "",
-    },
-  });
+  const [formData, setFormData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const [registrationDate, setRegistrationDate] = useState("");
-  const [familyDetails, setFamilyDetails] = useState([
-    {
-      name: "",
-      relation: "",
-      age: "",
-      education: "",
-      income: "",
-      marriageStatus: "",
-      remark: "",
-    },
-  ]);
-
-  // Fetch existing patient data
   useEffect(() => {
     const fetchPatient = async () => {
       try {
-        const docRef = doc(db, "Patients", patientId);
+        const docRef = doc(db, "RegisterData", id);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-          const patientData = docSnap.data();
-          setPatientData({
-            profile: patientData.profile || patientData,
-            medical: patientData.medical || {},
-            doctor: patientData.doctor || {},
-            additionalInfo: patientData.additionalInfo || "",
-            deactivated: patientData.deactivated ?? false,
-          });
-          setRegistrationDate(patientData.registrationDate || "");
-          setFamilyDetails(patientData.familyDetails || []);
+          setFormData(docSnap.data());
         } else {
-          toast.error("Patient not found!", {
-            position: "top-center",
-            autoClose: 3000,
-          });
-          navigate("/main/patients"); // Redirect if patient not found
+          toast.error("Patient not found.");
+          setTimeout(() => navigate("/"), 2000);
         }
-      } catch (error) {
-        console.error("Error fetching patient: ", error);
-        toast.error(`Error fetching patient: ${error.message}`, {
-          position: "top-center",
-          autoClose: 5000,
-        });
+      } catch (err) {
+        console.error("Error fetching patient:", err);
+        toast.error("Error loading patient data.");
+        setTimeout(() => navigate("/"), 2000);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchPatient();
-  }, [patientId, navigate]);
+  }, [id, navigate]);
 
-  const handleChange = (e, section) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
-    setPatientData((prevData) => ({
-      ...prevData,
-      [section]: {
-        ...prevData[section],
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleNestedChange = (parent, e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [parent]: {
+        ...prev[parent],
         [name]: value,
       },
     }));
   };
 
-  const handleFamilyDetailsChange = (index, e) => {
+  const handlePeopleCountChange = (e) => {
     const { name, value } = e.target;
-    const updatedFamilyDetails = [...familyDetails];
-    updatedFamilyDetails[index][name] = value;
-    setFamilyDetails(updatedFamilyDetails);
-  };
-
-  const addFamilyMember = () => {
-    setFamilyDetails([
-      ...familyDetails,
-      {
-        name: "",
-        relation: "",
-        age: "",
-        education: "",
-        income: "",
-        marriageStatus: "",
-        remark: "",
+    setFormData((prev) => ({
+      ...prev,
+      peopleWithYou: {
+        ...prev.peopleWithYou,
+        [name]: parseInt(value) || 0,
       },
-    ]);
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
-      const patientRef = doc(db, "Patients", patientId);
-      await updateDoc(patientRef, {
-        ...patientData.profile,
-        ...patientData.medical,
-        familyDetails,
-        registrationDate,
-        deactivated: false,
-      });
-
+      await updateDoc(doc(db, "RegisterData", id), formData);
       toast.success("Patient updated successfully!", {
-        position: "top-center",
         autoClose: 3000,
+        onClose: () => navigate(`/main/patient/${id}`)
       });
-
-      setTimeout(() => {
-        navigate(`/main/patient/${patientId}`);
-      }, 3000);
-    } catch (error) {
-      toast.error(`Failed to update patient: ${error.message}`, {
-        position: "top-center",
-        autoClose: 5000,
-      });
+    } catch (err) {
+      console.error("Update error:", err);
+      toast.error("Failed to update patient.");
     }
   };
 
-  return (
-    <div className="AddPatient-container">
-      <button className="AddPatient-backButton" onClick={() => navigate(-1)}>
-        &larr; Back      </button>
-      <h2 className="AddPatient-title">Update Patient</h2>
-      <form onSubmit={handleSubmit} className="AddPatient-form">
-        {/* Section 1: Profile */}
-        <h4 className="AddPatient-sectionTitle">Profile Section : </h4>
-        <div className="AddPatient-row">
-                {/* Registration Date */}
-        <div className="AddPatient-field">
-          <label htmlFor="registrationDate">Registration Date:</label>
-          <input
-            type="date"
-            id="registrationDate"
-            name="registrationDate"
-            value={registrationDate}
-            onChange={(e) => setRegistrationDate(e.target.value)}
-            required
-          />
-        </div>
-          <div className="AddPatient-field">
-            <label htmlFor="name">Name:</label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={patientData.profile.name}
-              onChange={(e) => handleChange(e, "profile")}
-            />
-          </div>
-          <div className="AddPatient-field">
-            <label htmlFor="registernumber">Register Number:</label>
-            <input
-              type="text"
-              id="registernumber"
-              name="registernumber"
-              value={patientData.profile.registernumber}
-              onChange={(e) => handleChange(e, "profile")}
-            />
-          </div>
-          <div className="AddPatient-field">
-            <label htmlFor="age">Age:</label>
-            <input
-              type="text"
-              id="age"
-              name="age"
-              value={patientData.profile.age}
-              onChange={(e) => handleChange(e, "profile")}
-            />
-          </div>
-          <div className="AddPatient-field">
-                  <label htmlFor="gender">Gender:</label>
-                  <select
-                    id="gender"
-                    name="gender"
-                    className="form-control"
-                    value={patientData.profile.gender}
-                    onChange={(e) => handleChange(e, "profile")}
-                  >
-                  <option value="NOT SAY">Not Mention</option>
-                  <option value="MALE">Male</option>
-                  <option value="FEMALE">Female</option>
-                  <option value="OTHER">Other</option>
-                  </select>
-                  </div>
-                  <div className="AddPatient-field">
-  <label htmlFor="category">Category:</label>
-  <select
-    id="category"
-    name="category"
-    className="form-control"
-    value={patientData.profile.category}
-    onChange={(e) => handleChange(e, "profile")}
-  >
-    <option value="">Not Mention</option>
-    <option value="B">B</option>
-    <option value="A">A</option>
-    <option value="C">C</option>
-    <option value="NHC">NHC</option>
-    <option value="SOS">SOS</option>
-    <option value="MEDICAL SUPPORT">MEDICAL SUPPORT</option>
-  </select>
-</div>
-      
-          <div className="AddPatient-field">
-            <label htmlFor="address">Address:</label>
-            <input
-              type="text"
-              id="address"
-              name="address"
-              value={patientData.profile.address}
-              onChange={(e) => handleChange(e, "profile")}
-            />
-          </div>
-          <div className="AddPatient-field">
-            <label htmlFor="email">Email:</label>
-            <input
-              type="text"
-              id="email"
-              name="email"
-              value={patientData.profile.email}
-              onChange={(e) => handleChange(e, "profile")}
-            />
-          </div>
-          <div className="AddPatient-field">
-            <label htmlFor="password">Password:</label>
-            <input
-              type="text"
-              id="password"
-              name="password"
-              value={patientData.profile.password}
-              onChange={(e) => handleChange(e, "profile")}
-            />
-          </div>
-          <div className="AddPatient-field">
-            <label htmlFor="dob">Dob:</label>
-            <input
-              type="date"
-              id="dob"
-              name="dob"
-              value={patientData.profile.dob}
-              onChange={(e) => handleChange(e, "profile")}
-            />
-          </div>
-          <div className="AddPatient-field">
-  <label htmlFor="location">Location:</label>
-  <textarea
-    id="location"
-    name="location"
-    style={{ height: "80px" }} // You can adjust the height as needed
-    value={patientData.profile.location}
-    onChange={(e) => handleChange(e, "profile")}
-  />
-</div>
-          <div className="AddPatient-field">
-            <label htmlFor="panchayat">Panchayat:</label>
-            <input
-              type="text"
-              id="panchayat"
-              name="panchayat"
-              value={patientData.profile.panchayat}
-              onChange={(e) => handleChange(e, "profile")}
-            />
-          </div>
-          <div className="AddPatient-field">
-            <label htmlFor="ward">Ward:</label>
-            <input
-              type="text"
-              id="ward"
-              name="ward"
-              value={patientData.profile.ward}
-              onChange={(e) => handleChange(e, "profile")}
-            />
-          </div>
-          <div className="AddPatient-field">
-            <label htmlFor="mainCaretaker">MainCaretaker:</label>
-            <input
-              type="text"
-              id="mainCaretaker"
-              name="mainCaretaker"
-              value={patientData.profile.mainCaretaker}
-              onChange={(e) => handleChange(e, "profile")}
-            />
-          </div>
-          <div className="AddPatient-field">
-            <label htmlFor="mainCaretakerPhone">MainCaretakerPhone:</label>
-            <input
-              type="text"
-              id="mainCaretakerPhone"
-              name="mainCaretakerPhone"
-              value={patientData.profile.mainCaretakerPhone}
-              onChange={(e) => handleChange(e, "profile")}
-            />
-          </div>
-          <div className="AddPatient-field">
-            <label htmlFor="relativePhone">RelativePhone:</label>
-            <input
-              type="text"
-              id="relativePhone"
-              name="relativePhone"
-              value={patientData.profile.relativePhone}
-              onChange={(e) => handleChange(e, "profile")}
-            />
-          </div>
-          <div className="AddPatient-field">
-            <label htmlFor="referralPerson">ReferralPerson:</label>
-            <input
-              type="text"
-              id="referralPerson"
-              name="referralPerson"
-              value={patientData.profile.referralPerson}
-              onChange={(e) => handleChange(e, "profile")}
-            />
-          </div>
-          <div className="AddPatient-field">
-            <label htmlFor="referralPhone">ReferralPhone:</label>
-            <input
-              type="text"
-              id="referralPhone"
-              name="referralPhone"
-              value={patientData.profile.referralPhone}
-              onChange={(e) => handleChange(e, "profile")}
-            />
-          </div>
-          <div className="AddPatient-field">
-            <label htmlFor="neighbourName">NeighbourName:</label>
-            <input
-              type="text"
-              id="neighbourName"
-              name="neighbourName"
-              value={patientData.profile.neighbourName}
-              onChange={(e) => handleChange(e, "profile")}
-            />
-          </div>
-          <div className="AddPatient-field">
-            <label htmlFor="neighbourPhone">NeighbourPhone:</label>
-            <input
-              type="text"
-              id="neighbourPhone"
-              name="neighbourPhone"
-              value={patientData.profile.neighbourPhone}
-              onChange={(e) => handleChange(e, "profile")}
-            />
-          </div>
-          <div className="AddPatient-field">
-            <label htmlFor="neighbourName">NeighbourName:</label>
-            <input
-              type="text"
-              id="neighbourName"
-              name="neighbourName"
-              value={patientData.profile.neighbourName}
-              onChange={(e) => handleChange(e, "profile")}
-            />
-          </div>
-          <div className="AddPatient-field">
-            <label htmlFor="communityVolunteer">CommunityVolunteer:</label>
-            <input
-              type="text"
-              id="communityVolunteer"
-              name="communityVolunteer"
-              value={patientData.profile.communityVolunteer}
-              onChange={(e) => handleChange(e, "profile")}
-            />
-          </div>
-          <div className="AddPatient-field">
-            <label htmlFor="communityVolunteerPhone">CommunityVolunteerPhone:</label>
-            <input
-              type="text"
-              id="communityVolunteerPhone"
-              name="communityVolunteerPhone"
-              value={patientData.profile.communityVolunteerPhone}
-              onChange={(e) => handleChange(e, "profile")}
-            />
-          </div>
-          <div className="AddPatient-field">
-            <label htmlFor="wardMember">WardMember:</label>
-            <input
-              type="text"
-              id="wardMember"
-              name="wardMember"
-              value={patientData.profile.wardMember}
-              onChange={(e) => handleChange(e, "profile")}
-            />
-          </div>
-          <div className="AddPatient-field">
-            <label htmlFor="wardMemberPhone">WardMemberPhone:</label>
-            <input
-              type="text"
-              id="wardMemberPhone"
-              name="wardMemberPhone"
-              value={patientData.profile.wardMemberPhone}
-              onChange={(e) => handleChange(e, "profile")}
-            />
-          </div>
-          <div className="AddPatient-field">
-            <label htmlFor="ashaWorker">AshaWorker:</label>
-            <input
-              type="text"
-              id="ashaWorker"
-              name="ashaWorker"
-              value={patientData.profile.ashaWorker}
-              onChange={(e) => handleChange(e, "profile")}
-            />
-          </div>
-          <div className="AddPatient-field">
-  <label htmlFor="medicalHistory">Medical History:</label>
-  <textarea
-    id="medicalHistory"
-    name="medicalHistory"
-    value={patientData.profile.medicalHistory}
-    onChange={(e) => handleChange(e, "profile")}
-    rows={5} // You can adjust the number of rows as needed
-    style={{ resize: "vertical" }} // Allows vertical resizing
-  />
-</div>
-          <div className="AddPatient-field">
-            <label htmlFor="currentDifficulties">CurrentDifficulties:</label>
-            <input
-              type="text"
-              id="currentDifficulties"
-              name="currentDifficulties"
-              value={patientData.profile.currentDifficulties}
-              onChange={(e) => handleChange(e, "profile")}
-            />
-          </div>
-          <div className="AddPatient-field">
-            <label htmlFor="mainDiagnosis">MainDiagnosis:</label>
-            <input
-              type="text"
-              id="mainDiagnosis"
-              name="mainDiagnosis"
-              value={patientData.profile.mainDiagnosis}
-              onChange={(e) => handleChange(e, "profile")}
-            />
-          </div>
-          <div className="AddPatient-field">
-  <label htmlFor="additionalInfo">Additional Notes For Nurse:</label>
-  <textarea
-    id="additionalInfo"
-    name="additionalInfo"
-    value={patientData.profile.additionalInfo}
-    onChange={(e) => handleChange(e, "profile")}
-    rows={4} // Adjust the number of rows as needed
-    style={{ resize: "vertical" }} // Allows vertical resizing
-  />
-</div>
-          
-<h4 className="AddPatient-sectionTitle">Doctor Section:</h4>
-<div className="AddPatient-field">
-  <label htmlFor="advice">Advice:</label>
-  <textarea
-    id="advice"
-    name="advice"
-    value={patientData.profile.advice}
-    onChange={(e) => handleChange(e, "profile")}
-    rows={4} // Adjust the number of rows as needed
-    style={{ resize: "vertical", height: "80px" }} // Allows vertical resizing
-  />
-</div>
-<div className="AddPatient-field">
-  <label htmlFor="examinations">Examinations:</label>
-  <textarea
-    id="examinations"
-    name="examinations"
-    value={patientData.profile.examinations}
-    onChange={(e) => handleChange(e, "profile")}
-    rows={4} // Adjust the number of rows as needed
-    style={{ resize: "vertical", height: "80px" }} // Allows vertical resizing
-  />
-</div>
-<div className="AddPatient-field">
-  <label htmlFor="note">Note For Doctors:</label>
-  <textarea
-    id="note"
-    name="note"
-    value={patientData.profile.note}
-    onChange={(e) => handleChange(e, "profile")}
-    rows={4} // Adjust the number of rows as needed
-    style={{ resize: "vertical", height: "80px" }} // Allows vertical resizing
-  />
-</div>
-        </div>
+  if (loading || !formData) return <div className="text-center mt-5">Loading...</div>;
 
-        {/* Section 4: Family Details */}
-        <h4 className="AddPatient-sectionTitle">Section 4: Family Details</h4>
-        {familyDetails.map((family, index) => (
-          <div key={index} className="AddPatient-familyDetails">
-            <h5>Family Member {index + 1}</h5>
-            <div className="AddPatient-row">
-              <div className="AddPatient-field">
-                <label htmlFor={`name-${index}`}>Name:</label>
+  return (
+    <div className="container mt-4">
+        <ToastContainer 
+        position="top-center"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2>Update Patient</h2>
+        <button 
+          className="btn btn-secondary"
+          onClick={() => navigate(-1)}
+        >
+          Back
+        </button>
+      </div>
+      
+      <form onSubmit={handleSubmit}>
+        {/* Patient Basic Information */}
+        <div className="card mb-4">
+          <div className="card-header bg-primary text-white">
+            Patient Information
+          </div>
+          <div className="card-body">
+            <div className="row">
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Patient Name</label>
                 <input
                   type="text"
-                  id={`name-${index}`}
-                  name="name"
-                  value={family.name}
-                  onChange={(e) => handleFamilyDetailsChange(index, e)}
+                  className="form-control"
+                  name="patientname"
+                  value={formData.patientname}
+                  onChange={handleChange}
+                  required
                 />
               </div>
-              <div className="AddPatient-field">
-                <label htmlFor={`relation-${index}`}>Relation:</label>
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Palliative ID</label>
                 <input
                   type="text"
-                  id={`relation-${index}`}
-                  name="relation"
-                  value={family.relation}
-                  onChange={(e) => handleFamilyDetailsChange(index, e)}
+                  className="form-control"
+                  name="palliativeId"
+                  value={formData.palliativeId}
+                  onChange={handleChange}
+                  readOnly
                 />
               </div>
-              <div className="AddPatient-field">
-                <label htmlFor={`age-${index}`}>Age:</label>
+            </div>
+            <div className="row">
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Address</label>
                 <input
                   type="text"
-                  id={`age-${index}`}
-                  name="age"
-                  value={family.age}
-                  onChange={(e) => handleFamilyDetailsChange(index, e)}
+                  className="form-control"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
                 />
               </div>
-              <div className="AddPatient-field">
-                <label htmlFor={`age-${index}`}>Education:</label>
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Place</label>
                 <input
                   type="text"
-                  id={`education-${index}`}
-                  name="education"
-                  value={family.education}
-                  onChange={(e) => handleFamilyDetailsChange(index, e)}
+                  className="form-control"
+                  name="place"
+                  value={formData.place}
+                  onChange={handleChange}
                 />
               </div>
-              <div className="AddPatient-field">
-                <label htmlFor={`age-${index}`}>Income:</label>
+            </div>
+            <div className="row">
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Panchayat</label>
                 <input
                   type="text"
-                  id={`income-${index}`}
-                  name="income"
-                  value={family.income}
-                  onChange={(e) => handleFamilyDetailsChange(index, e)}
+                  className="form-control"
+                  name="panchayat"
+                  value={formData.panchayat}
+                  onChange={handleChange}
                 />
               </div>
-              <div className="AddPatient-field">
-                <label htmlFor={`age-${index}`}>Marriage Status:</label>
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Ward Number</label>
                 <input
                   type="text"
-                  id={`marriageStatus-${index}`}
-                  name="marriageStatus"
-                  value={family.marriageStatus}
-                  onChange={(e) => handleFamilyDetailsChange(index, e)}
+                  className="form-control"
+                  name="wardNumber"
+                  value={formData.wardNumber}
+                  onChange={handleChange}
                 />
               </div>
-              <div className="AddPatient-field">
-                <label htmlFor={`age-${index}`}>Remark:</label>
+            </div>
+            <div className="row">
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Equipment Required</label>
                 <input
                   type="text"
-                  id={`remark-${index}`}
-                  name="remark"
-                  value={family.remark}
-                  onChange={(e) => handleFamilyDetailsChange(index, e)}
+                  className="form-control"
+                  name="equipmentRequired"
+                  value={formData.equipmentRequired}
+                  onChange={handleChange}
                 />
               </div>
-              {/* Add more fields as needed */}
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Food Requirements</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="food"
+                  value={formData.food}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+            <div className="row">
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Medicine Requirements</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="medicine"
+                  value={formData.medicine}
+                  onChange={handleChange}
+                />
+              </div>
             </div>
           </div>
-        ))}
-        <button type="button" className="AddPatient-addFamilyButton" onClick={addFamilyMember}>
-          + Family Member
-        </button>
-        {/* Submit Button */}
-        <button type="submit" className="AddPatient-submitButton">
-          Update Patient
-        </button>
+        </div>
+
+        {/* Transportation Information */}
+        <div className="card mb-4">
+          <div className="card-header bg-primary text-white">
+            Transportation Information
+          </div>
+          <div className="card-body">
+            <div className="row">
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Vehicle</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="vehicle"
+                  value={formData.vehicle}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Leaving Time</label>
+                <input
+                  type="time"
+                  className="form-control"
+                  name="leavingTime"
+                  value={formData.leavingTime}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* People Information */}
+        <div className="card mb-4">
+          <div className="card-header bg-primary text-white">
+            People Information
+          </div>
+          <div className="card-body">
+            <div className="row">
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Number of Children</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  name="children"
+                  value={formData.peopleWithYou?.children || 0}
+                  onChange={handlePeopleCountChange}
+                  min="0"
+                />
+              </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Number of Adults</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  name="adults"
+                  value={formData.peopleWithYou?.adults || 0}
+                  onChange={handlePeopleCountChange}
+                  min="0"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bystander Information */}
+        <div className="card mb-4">
+          <div className="card-header bg-primary text-white">
+            Bystander Information
+          </div>
+          <div className="card-body">
+            <div className="row">
+              <div className="col-md-4 mb-3">
+                <label className="form-label">Bystander Name</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="name"
+                  value={formData.bystander?.name || ""}
+                  onChange={(e) => handleNestedChange("bystander", e)}
+                />
+              </div>
+              <div className="col-md-4 mb-3">
+                <label className="form-label">Phone 1</label>
+                <input
+                  type="tel"
+                  className="form-control"
+                  name="phone1"
+                  value={formData.bystander?.phone1 || ""}
+                  onChange={(e) => handleNestedChange("bystander", e)}
+                />
+              </div>
+              <div className="col-md-4 mb-3">
+                <label className="form-label">Phone 2</label>
+                <input
+                  type="tel"
+                  className="form-control"
+                  name="phone2"
+                  value={formData.bystander?.phone2 || ""}
+                  onChange={(e) => handleNestedChange("bystander", e)}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Coordinator Information */}
+        <div className="card mb-4">
+          <div className="card-header bg-primary text-white">
+            Coordinator Information
+          </div>
+          <div className="card-body">
+            <div className="row">
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Ward Coordinator Name</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="name"
+                  value={formData.wardCoordinator?.name || ""}
+                  onChange={(e) => handleNestedChange("wardCoordinator", e)}
+                />
+              </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Ward Coordinator Phone</label>
+                <input
+                  type="tel"
+                  className="form-control"
+                  name="phone"
+                  value={formData.wardCoordinator?.phone || ""}
+                  onChange={(e) => handleNestedChange("wardCoordinator", e)}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Volunteer Information */}
+        <div className="card mb-4">
+          <div className="card-header bg-primary text-white">
+            Volunteer Information
+          </div>
+          <div className="card-body">
+            <div className="row">
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Patient Volunteer Name</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="name"
+                  value={formData.patientVolunteer?.name || ""}
+                  onChange={(e) => handleNestedChange("patientVolunteer", e)}
+                />
+              </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Patient Volunteer Phone</label>
+                <input
+                  type="tel"
+                  className="form-control"
+                  name="phone"
+                  value={formData.patientVolunteer?.phone || ""}
+                  onChange={(e) => handleNestedChange("patientVolunteer", e)}
+                />
+              </div>
+            </div>
+            <div className="row">
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Incharge Volunteer Name</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="name"
+                  value={formData.inchargeVolunteer?.name || ""}
+                  onChange={(e) => handleNestedChange("inchargeVolunteer", e)}
+                />
+              </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Incharge Volunteer Phone</label>
+                <input
+                  type="tel"
+                  className="form-control"
+                  name="phone"
+                  value={formData.inchargeVolunteer?.phone || ""}
+                  onChange={(e) => handleNestedChange("inchargeVolunteer", e)}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Remarks */}
+        <div className="card mb-4">
+          <div className="card-header bg-primary text-white">Remarks</div>
+          <div className="card-body">
+            <div className="mb-3">
+              <label className="form-label">Other Remarks</label>
+              <textarea
+                className="form-control"
+                name="remarks"
+                value={formData.remarks || ""}
+                onChange={handleChange}
+                rows="3"
+              ></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div className="d-grid gap-2 d-md-flex justify-content-md-end">
+          <button 
+            type="button" 
+            className="btn btn-secondary me-md-2"
+            onClick={() => navigate(-1)}
+          >
+            Back
+          </button>
+          <button type="submit" className="btn btn-primary">
+            Save Changes
+          </button>
+        </div>
       </form>
-      <ToastContainer />
     </div>
   );
 };

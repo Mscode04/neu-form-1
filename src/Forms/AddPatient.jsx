@@ -1,208 +1,92 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { db } from "../Firebase/config";
-import { collection, addDoc, getDocs, query } from "firebase/firestore";
 import { doc, setDoc } from "firebase/firestore";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import './AddPatient.css'
 
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import "./AddPatient.css";
-
-const AddPatient = () => {
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [existingRegisterNumbers, setExistingRegisterNumbers] = useState([]);
-  const [patientData, setPatientData] = useState({
-    profile: {
-      registernumber: "",
+const Register = () => {
+  const [formData, setFormData] = useState({
+    palliativeId: "",
+    patientname: "",
+    address: "",
+    place: "",
+    panchayat: "MAKKARAPARAMBA",
+    wardNumber: "",
+    equipmentRequired: "",
+    food: "",
+    medicine: "NO",
+    vehicle: "",
+    peopleWithYou: {
+      children: 0,
+      adults: 0,
+    },
+    bystander: {
       name: "",
-      age: "",
-      dob: "",
-      gender: "NOT SAY",
-      category: "B",
-      address: "",
-      email: ".mkba@gmail.com",
-      password: "",
-      mainCaretaker: "",
-      mainCaretakerPhone: "",
-      panchayat: "",
-      ward: "",
-      location: "",
-      relativePhone: "",
-      communityVolunteer: "",
-      communityVolunteerPhone: "",
-      deactivated: false,
-      referralPerson: "",
-      referralPhone: "",
-      neighbourName: "",
-      neighbourPhone: "",
-      wardMember: "",
-      wardMemberPhone: "",
-      ashaWorker: "",
-      additionalInfo: "",
+      phone1: "",
+      phone2: "",
     },
-    medical: {
-      mainDiagnosis: "",
-      medicalHistory: "",
-      currentDifficulties: "",
+    wardCoordinator: {
+      name: "",
+      phone: "",
     },
-    doctor: {
-      advice: "",
-      note: "",
-      examinations: "",
+    patientVolunteer: {
+      name: "",
+      phone: "",
     },
+    inchargeVolunteer: {
+      name: "",
+      phone: "",
+    },
+    leavingTime: "22:00",
+    remarks: "NO REMARK",
   });
 
-  const [registrationDate, setRegistrationDate] = useState("");
-  const [familyDetails, setFamilyDetails] = useState([
-    {
-      name: "",
-      age: "",
-      relation: "",
-      education: "",
-      income: "",
-      marriageStatus: "",
-      remark: "NOT",
-    },
-  ]);
+  // Generate PTV + 6 random digits ID
+  const generatePalliativeId = () => {
+    const randomNum = Math.floor(100000 + Math.random() * 900000);
+    return `PTV${randomNum}`;
+  };
 
-  useEffect(() => {
-    // Fetch all existing registernumbers from Firestore
-    const fetchRegisterNumbers = async () => {
-      const q = query(collection(db, "Patients"));
-      const querySnapshot = await getDocs(q);
-      const registerNumbers = querySnapshot.docs.map((doc) => doc.data().registernumber);
-      setExistingRegisterNumbers(registerNumbers);
-    };
-
-    fetchRegisterNumbers();
-  }, []);
-
-  const handleChange = (e, section) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
-    setPatientData((prevData) => ({
-      ...prevData,
-      [section]: {
-        ...prevData[section],
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleNestedChange = (parent, e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [parent]: {
+        ...prev[parent],
         [name]: value,
       },
     }));
   };
 
-  const handleFamilyDetailsChange = (index, e) => {
+  const handlePeopleCountChange = (e) => {
     const { name, value } = e.target;
-    const updatedFamilyDetails = [...familyDetails];
-    updatedFamilyDetails[index][name] = value;
-    setFamilyDetails(updatedFamilyDetails);
-  };
-
-  const addFamilyMember = () => {
-    setFamilyDetails([
-      ...familyDetails,
-      {
-        name: "",
-        relation: "",
-        age: "",
-        education: "",
-        income: "",
-        marriageStatus: "",
-        remark: "NOT",
+    setFormData((prev) => ({
+      ...prev,
+      peopleWithYou: {
+        ...prev.peopleWithYou,
+        [name]: parseInt(value) || 0,
       },
-    ]);
-  };
-
-  const generatePatientId = () => {
-    const min = 100000000000; // Smallest 12-digit number
-    const max = 999999999999; // Largest 12-digit number
-    return (Math.floor(Math.random() * (max - min + 1)) + min).toString(); // Ensure it's a string
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Check if registernumber already exists
-    if (existingRegisterNumbers.includes(patientData.profile.registernumber)) {
-      toast.warning("Register number already exists!", {
-        position: "top-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
-      return;
-    }
-
-    setLoading(true); // Start loading
-
-    // Show "wait a moment" toast
-    toast.info("Wait a moment...", {
-      position: "top-center",
-      autoClose: false, // Don't auto-close this toast
-      hideProgressBar: false,
-      closeOnClick: false,
-      pauseOnHover: true,
-      draggable: true,
-    });
-
     try {
-      const patientId = generatePatientId();
-      const registerTime = new Date().toISOString();
-
-      const profileData = {
-        ...patientData.profile,
-        age: patientData.profile.age.toString(),
-        mainCaretakerPhone: patientData.profile.mainCaretakerPhone.toString(),
-        relativePhone: patientData.profile.relativePhone.toString(),
-        referralPhone: patientData.profile.referralPhone.toString(),
-        neighbourPhone: patientData.profile.neighbourPhone.toString(),
-        communityVolunteerPhone: patientData.profile.communityVolunteerPhone.toString(),
-        wardMemberPhone: patientData.profile.wardMemberPhone.toString(),
-      };
-
-      await setDoc(doc(db, "Patients", patientId), {
-        ...profileData,
-        ...patientData.medical,
-        ...patientData.doctor,
-        familyDetails: familyDetails.map((member) => ({
-          ...member,
-          age: member.age.toString(),
-          income: member.income.toString(),
-        })),
-        registrationDate,
-        registerTime,
-        patientId,
-      });
-
-      await addDoc(collection(db, "users"), {
-        email: patientData.profile.email,
-        password: patientData.profile.password,
-        patientId,
-        is_nurse: false,
-      });
-
-      // Dismiss the "wait a moment" toast
-      toast.dismiss();
-
+      // Generate ID when form is submitted
+      const palliativeId = generatePalliativeId();
+      const dataToSave = { ...formData, palliativeId };
+      
+      // Use setDoc with the generated ID as document ID
+      await setDoc(doc(db, "RegisterData", palliativeId), dataToSave);
+      
       // Show success toast
-      toast.success("Patient added successfully!", {
-        position: "top-center",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
-
-      setTimeout(() => {
-        navigate(`/main/patient/${patientId}`);
-      }, 3000);
-    } catch (error) {
-      // Dismiss the "wait a moment" toast
-      toast.dismiss();
-
-      // Show error toast
-      toast.error(`Failed to add patient: ${error.message}`, {
+      toast.success(`Added successfully! Patient ID: ${palliativeId}`, {
         position: "top-center",
         autoClose: 5000,
         hideProgressBar: false,
@@ -210,189 +94,396 @@ const AddPatient = () => {
         pauseOnHover: true,
         draggable: true,
       });
-    } finally {
-      setLoading(false); // Stop loading
+
+      // Reset form after submission
+      setFormData({
+        palliativeId: "",
+        patientname: "",
+        address: "",
+        place: "",
+        panchayat: "",
+        wardNumber: "",
+        equipmentRequired: "",
+        food: "",
+        medicine: "",
+        vehicle: "",
+        peopleWithYou: {
+          children: 0,
+          adults: 0,
+        },
+        bystander: {
+          name: "",
+          phone1: "",
+          phone2: "",
+        },
+        wardCoordinator: {
+          name: "",
+          phone: "",
+        },
+        patientVolunteer: {
+          name: "",
+          phone: "",
+        },
+        inchargeVolunteer: {
+          name: "",
+          phone: "",
+        },
+        leavingTime: "",
+        remarks: "",
+      });
+    } catch (error) {
+      console.error("Error saving data: ", error);
+      // Show error toast
+      toast.error("Error saving data. Please try again.", {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     }
   };
-
   return (
-    <div className="AddPatient-container">
-      {loading && (
-        <div className="loading-container">
-          <img
-            src="https://media.giphy.com/media/YMM6g7x45coCKdrDoj/giphy.gif"
-            alt="Loading..."
-            className="loading-image"
-          />
-        </div>
-      )}
-      <button className="AddPatient-backButton" onClick={() => navigate(-1)}>
-        &larr; Back
-      </button>
-      <h2 className="AddPatient-title">Add New Patient</h2>
-      <form onSubmit={handleSubmit} className="AddPatient-form">
-        {/* Section 1: Profile */}
-        <h4 className="AddPatient-sectionTitle">Section 1: Profile</h4>
-        <div className="AddPatient-field">
-          <label htmlFor="registrationDate">Registration Date: MM-DD-YYYY</label>
-          <input
-            type="date"
-            id="registrationDate"
-            name="registrationDate"
-            value={registrationDate}
-            onChange={(e) => setRegistrationDate(e.target.value)}
-            required
-          />
-        </div>
-        <div className="AddPatient-row">
-          {Object.entries(patientData.profile).map(([field, value]) => (
-            <div className="AddPatient-field" key={field}>
-              <label
-                htmlFor={field}
-                className={field === "deactivated" ? "d-none" : ""}
-              >
-                {field.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}:
-              </label>
-              {field === "gender" ? (
-                <select
-                  id={field}
-                  name={field}
-                  className="form-control"
-                  value={value || ""}
-                  onChange={(e) => handleChange(e, "profile")}
-                >
-                  <option value="NOT SAY">Not Mention</option>
-                  <option value="MALE">Male</option>
-                  <option value="FEMALE">Female</option>
-                  <option value="OTHER">Other</option>
-                </select>
-              ) : field === "category" ? (
-                <select
-                  id={field}
-                  name={field}
-                  className="form-control"
-                  value={value || ""}
-                  onChange={(e) => handleChange(e, "profile")}
-                >
-                  <option value="">Not Mention</option>
-                  <option value="B">B</option>
-                  <option value="A">A</option>
-                  <option value="C">C</option>
-                  <option value="NHC">NHC</option>
-                  <option value="SOS">SOS</option>
-                  <option value="MEDICAL SUPPORT">MEDICAL SUPPORT</option>
-                </select>
-              ) : field === "location" || field === "additionalInfo" ? (
-                <textarea
-                  id={field}
-                  name={field}
-                  value={value || ""}
-                  onChange={(e) => handleChange(e, "profile")}
-                  rows="3"
-                />
-              ) : field === "dob" ? (
-                <input
-                  type="date"
-                  id={field}
-                  name={field}
-                  value={value || ""}
-                  onChange={(e) => handleChange(e, "profile")}
-                />
-              ) : field === "deactivated" ? (
+    <div className="container mt-4">
+       <ToastContainer 
+        position="top-center"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+      <h2 className="mb-4">Patient Registration</h2>
+      <form onSubmit={handleSubmit}>
+        {/* Patient Basic Information */}
+        <div className="card mb-4">
+          <div className="card-header bg-primary text-white">
+            Patient Information
+          </div>
+          <div className="card-body">
+            <div className="row">
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Patient Name</label>
                 <input
                   type="text"
-                  id={field}
-                  className="d-none"
-                  name={field}
-                  value={value || ""}
-                  onChange={(e) => handleChange(e, "profile")}
+                  className="form-control"
+                  name="patientname"
+                  value={formData.patientname}
+                  onChange={handleChange}
+                  required
                 />
-              ) : (
+              </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Address</label>
                 <input
-                  type={field === "email" ? "text" : field === "password" ? "password" : "text"}
-                  id={field}
-                  name={field}
-                  value={value || ""}
-                  onChange={(e) => handleChange(e, "profile")}
+                  type="text"
+                  className="form-control"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  required
                 />
-              )}
+              </div>
             </div>
-          ))}
+            <div className="row">
+              <div className="col-md-4 mb-3">
+                <label className="form-label">Place</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="place"
+                  value={formData.place}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div className="col-md-4 mb-3">
+                <label className="form-label">Panchayat</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="panchayat"
+                  value={formData.panchayat}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div className="col-md-4 mb-3">
+                <label className="form-label">Ward Number</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="wardNumber"
+                  value={formData.wardNumber}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </div>
+            <div className="row">
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Equipment Required</label>
+                <select
+                  className="form-select"
+                  name="equipmentRequired"
+                  value={formData.equipmentRequired}
+                  onChange={handleChange}
+                >
+                  <option value="">Select Equipment</option>
+                  <option value="WHEELCHAIR">WHEELCHAIR</option>
+                  <option value="CHAIR">CHAIR</option>
+                  <option value="COT">COT</option>
+                </select>
+              </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Food Requirements</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="food"
+                  value={formData.food}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+            <div className="row">
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Medicine Requirements</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="medicine"
+                  value={formData.medicine}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Section 2: Medical Section */}
-        <h4 className="AddPatient-sectionTitle">Section 2: Medical Section</h4>
-        <div className="AddPatient-row">
-          {Object.entries(patientData.medical).map(([field, value]) => (
-            <div className="AddPatient-field" key={field}>
-              <label htmlFor={field}>
-                {field.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}:
-              </label>
-              <textarea
-                id={field}
-                name={field}
-                value={value}
-                onChange={(e) => handleChange(e, "medical")}
-                rows="4"
-              ></textarea>
+         {/* Transportation Information */}
+         <div className="card mb-4">
+          <div className="card-header bg-primary text-white">
+            Transportation Information
+          </div>
+          <div className="card-body">
+            <div className="row">
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Vehicle</label>
+                <select
+                  className="form-select"
+                  name="vehicle"
+                  value={formData.vehicle}
+                  onChange={handleChange}
+                >
+                  <option value="">Select Vehicle</option>
+                  <option value="AMBULANCE">AMBULANCE</option>
+                  <option value="CAR">CAR</option>
+                  <option value="AUTO">AUTO</option>
+                  <option value="BIG CAR">BIG CAR</option>
+                </select>
+              </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Leaving Time</label>
+                <input
+                  type="time"
+                  className="form-control"
+                  name="leavingTime"
+                  value={formData.leavingTime}
+                  onChange={handleChange}
+                />
+              </div>
             </div>
-          ))}
+          </div>
         </div>
 
-        {/* Section 3: Doctor */}
-        <h4 className="AddPatient-sectionTitle">Section 3: Doctor</h4>
-        <div className="AddPatient-row">
-          {Object.entries(patientData.doctor).map(([field, value]) => (
-            <div className="AddPatient-field" key={field}>
-              <label htmlFor={field}>
-                {field.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}:
-              </label>
+        {/* People Information */}
+        <div className="card mb-4">
+          <div className="card-header bg-primary text-white">
+            People Information
+          </div>
+          <div className="card-body">
+            <div className="row">
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Number of Children</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  name="children"
+                  value={formData.peopleWithYou.children}
+                  onChange={handlePeopleCountChange}
+                  min="0"
+                />
+              </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Number of Adults</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  name="adults"
+                  value={formData.peopleWithYou.adults}
+                  onChange={handlePeopleCountChange}
+                  min="0"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bystander Information */}
+        <div className="card mb-4">
+          <div className="card-header bg-primary text-white">
+            Bystander Information
+          </div>
+          <div className="card-body">
+            <div className="row">
+              <div className="col-md-4 mb-3">
+                <label className="form-label">Bystander Name</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="name"
+                  value={formData.bystander.name}
+                  onChange={(e) => handleNestedChange("bystander", e)}
+                />
+              </div>
+              <div className="col-md-4 mb-3">
+                <label className="form-label">Phone 1</label>
+                <input
+                  type="tel"
+                  className="form-control"
+                  name="phone1"
+                  value={formData.bystander.phone1}
+                  onChange={(e) => handleNestedChange("bystander", e)}
+                />
+              </div>
+              <div className="col-md-4 mb-3">
+                <label className="form-label">Phone 2</label>
+                <input
+                  type="tel"
+                  className="form-control"
+                  name="phone2"
+                  value={formData.bystander.phone2}
+                  onChange={(e) => handleNestedChange("bystander", e)}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Coordinator Information */}
+        <div className="card mb-4">
+          <div className="card-header bg-primary text-white">
+            Coordinator Information
+          </div>
+          <div className="card-body">
+            <div className="row">
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Ward Coordinator Name</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="name"
+                  value={formData.wardCoordinator.name}
+                  onChange={(e) => handleNestedChange("wardCoordinator", e)}
+                />
+              </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Ward Coordinator Phone</label>
+                <input
+                  type="tel"
+                  className="form-control"
+                  name="phone"
+                  value={formData.wardCoordinator.phone}
+                  onChange={(e) => handleNestedChange("wardCoordinator", e)}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Volunteer Information */}
+        <div className="card mb-4">
+          <div className="card-header bg-primary text-white">
+            Volunteer Information
+          </div>
+          <div className="card-body">
+            <div className="row">
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Patient Volunteer Name</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="name"
+                  value={formData.patientVolunteer.name}
+                  onChange={(e) => handleNestedChange("patientVolunteer", e)}
+                />
+              </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Patient Volunteer Phone</label>
+                <input
+                  type="tel"
+                  className="form-control"
+                  name="phone"
+                  value={formData.patientVolunteer.phone}
+                  onChange={(e) => handleNestedChange("patientVolunteer", e)}
+                />
+              </div>
+            </div>
+            <div className="row">
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Incharge Volunteer Name</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="name"
+                  value={formData.inchargeVolunteer.name}
+                  onChange={(e) => handleNestedChange("inchargeVolunteer", e)}
+                />
+              </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Incharge Volunteer Phone</label>
+                <input
+                  type="tel"
+                  className="form-control"
+                  name="phone"
+                  value={formData.inchargeVolunteer.phone}
+                  onChange={(e) => handleNestedChange("inchargeVolunteer", e)}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Remarks */}
+        <div className="card mb-4">
+          <div className="card-header bg-primary text-white">Remarks</div>
+          <div className="card-body">
+            <div className="mb-3">
+              <label className="form-label">Other Remarks</label>
               <textarea
-                id={field}
-                name={field}
-                value={value}
-                onChange={(e) => handleChange(e, "doctor")}
+                className="form-control"
+                name="remarks"
+                value={formData.remarks}
+                onChange={handleChange}
                 rows="3"
               ></textarea>
             </div>
-          ))}
+          </div>
         </div>
 
-        {/* Section 4: Family Details */}
-        <h4 className="AddPatient-sectionTitle">Section 4: Family Details</h4>
-        {familyDetails.map((family, index) => (
-          <div key={index} className="AddPatient-familyDetails">
-            <h5>Family Member {index + 1}</h5>
-            <div className="AddPatient-row">
-              {Object.entries(family).map(([field, value]) => (
-                <div className="AddPatient-field" key={field}>
-                  <label htmlFor={`${field}-${index}`}>
-                    {field.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}:
-                  </label>
-                  <input
-                    type="text"
-                    id={`${field}-${index}`}
-                    name={field}
-                    value={value}
-                    onChange={(e) => handleFamilyDetailsChange(index, e)}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-        <button type="button" className="AddPatient-addFamilyButton" onClick={addFamilyMember}>
-          + Family Member
-        </button>
-
-        {/* Submit Button */}
-        <button type="submit" className="AddPatient-submitButton" disabled={loading}>
-          {loading ? "Submitting..." : "Submit"}
-        </button>
+        <div className="d-grid gap-2">
+          <button type="submit" className="btn btn-primary btn-sm">
+            Save 
+          </button>
+        </div>
       </form>
-      <ToastContainer />
     </div>
   );
 };
 
-export default AddPatient;
+export default Register;

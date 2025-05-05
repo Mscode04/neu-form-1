@@ -7,44 +7,44 @@ import Home from "../Home/Home";
 import AddPatient from "../Forms/AddPatient";
 import PatientTable from "../Patients-List/PatientTable";
 import PatientDetails from "../PatientDetials.jsx/PatientDetails";
-import NHC from "../Forms/NHC";
-import ReportsPage from "../PatientDetials.jsx/ReportsPage";
-import ReportDetailsNHC from "../PatientDetials.jsx/ReportDetailsNHC";
 import AllReportsPage from "../PatientDetials.jsx/AllReportsPage";
-import Medicine from "../Forms/Medicine";
-import UpdateMedicines from "../Forms/UpdateMedicines";
-import Equipment from "../Forms/Equipment";
-import NHCE from "../Forms/NHCE";
-import VHC from "../Forms/VHC";
-import GVHC from "../Forms/VHC";
-import Progression from "../Forms/PROGRESSION";
-import DHC from "../Forms/DHC";
-import Social from "../Forms/Social";
-import INVESTIGATION from "../Forms/INVESTGATION";
-import DEATH from "../Forms/DEATH";
-import UpdateNHC from "../Forms/UpdateNHC";
-import UpdateDHC from "../Forms/UpdateDHC";
-import UpdateVHC from "../Forms/UpdateVHC";
-import UpdateINVESTIGATION from "../Forms/UpdateINVESTIGATION";
-import UpdatePROGRESSION from "../Forms/UpdatePROGRESSION";
-import ReportDetailsDHC from "../PatientDetials.jsx/ReportDetailsDHC";
-import ReportDetailsVHC from "../PatientDetials.jsx/ReportDetailsVHC";
-import ReportDetailsPROGRESSION from "../PatientDetials.jsx/ReportDetailsPROGRESSION";
-import ReportDetailsINVESTIGATION from "../PatientDetials.jsx/ReportDetailsINVESTIGATION";
-import ReportDetailsSOCIAL from "../PatientDetials.jsx/ReportDetailsSOCIAL";
-import ReportDetailsDEATH from "../PatientDetials.jsx/ReportDetailsDEATH";
-import UpdateSOCIAL from "../Forms/UpdateSOCIAL";
-import UpdateDEATH from "../Forms/UpdateDEATH";
 import UpdatePatient from "../Forms/UpdatePatient";
-import MedicineList from "../Forms/MedicineList";
-import UpdateNHCE from "../Forms/UpdateNHCE";
-import FamilyTree from "../Forms/FamilyTree";
-import ReportDetailsNHCE from "../PatientDetials.jsx/ReportDetailsNHCE";
-import Conditions from "../Forms/Conditions";
-import DeactivatePatient from "../Forms/DeactivatePatient";
-import Divya from "../PatientDetials.jsx/Divya";
-import Shemeema from "../PatientDetials.jsx/Shemeema";
-import Haseena from "../PatientDetials.jsx/Haseena";
+// import NHC from "../Forms/NHC";
+// import ReportsPage from "../PatientDetials.jsx/ReportsPage";
+// import ReportDetailsNHC from "../PatientDetials.jsx/ReportDetailsNHC";
+// import Medicine from "../Forms/Medicine";
+// import UpdateMedicines from "../Forms/UpdateMedicines";
+// import Equipment from "../Forms/Equipment";
+// import NHCE from "../Forms/NHCE";
+// import VHC from "../Forms/VHC";
+// import GVHC from "../Forms/VHC";
+// import Progression from "../Forms/PROGRESSION";
+// import DHC from "../Forms/DHC";
+// import Social from "../Forms/Social";
+// import INVESTIGATION from "../Forms/INVESTGATION";
+// import DEATH from "../Forms/DEATH";
+// import UpdateNHC from "../Forms/UpdateNHC";
+// import UpdateDHC from "../Forms/UpdateDHC";
+// import UpdateVHC from "../Forms/UpdateVHC";
+// import UpdateINVESTIGATION from "../Forms/UpdateINVESTIGATION";
+// import UpdatePROGRESSION from "../Forms/UpdatePROGRESSION";
+// import ReportDetailsDHC from "../PatientDetials.jsx/ReportDetailsDHC";
+// import ReportDetailsVHC from "../PatientDetials.jsx/ReportDetailsVHC";
+// import ReportDetailsPROGRESSION from "../PatientDetials.jsx/ReportDetailsPROGRESSION";
+// import ReportDetailsINVESTIGATION from "../PatientDetials.jsx/ReportDetailsINVESTIGATION";
+// import ReportDetailsSOCIAL from "../PatientDetials.jsx/ReportDetailsSOCIAL";
+// import ReportDetailsDEATH from "../PatientDetials.jsx/ReportDetailsDEATH";
+// import UpdateSOCIAL from "../Forms/UpdateSOCIAL";
+// import UpdateDEATH from "../Forms/UpdateDEATH";
+// import MedicineList from "../Forms/MedicineList";
+// import UpdateNHCE from "../Forms/UpdateNHCE";
+
+// import ReportDetailsNHCE from "../PatientDetials.jsx/ReportDetailsNHCE";
+// import Conditions from "../Forms/Conditions";
+// import DeactivatePatient from "../Forms/DeactivatePatient";
+// import Divya from "../PatientDetials.jsx/Divya";
+// import Shemeema from "../PatientDetials.jsx/Shemeema";
+// import Haseena from "../PatientDetials.jsx/Haseena";
 function Main({ isAuthenticated, isNurse }) {
   if (!isAuthenticated || !isNurse) {
     return <Navigate to="/" />; // Redirect to login if not authenticated or not a nurse
@@ -56,14 +56,14 @@ function Main({ isAuthenticated, isNurse }) {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/addpt" element={<AddPatient />} />
-          <Route path="/fmtree/:patientId" element={<FamilyTree />} />
+          <Route path="/patient/:id" element={<PatientDetails />} />
+          <Route path="/ptlist" element={<PatientTable />} />
           <Route path="/allrepots" element={<AllReportsPage />} />
-          <Route path="/medicine-list" element={<MedicineList />} />
-          <Route path="/divya-list" element={<Divya />} />
+          <Route path="/update-patient/:id" element={<UpdatePatient />} />
+          {/* {/* <Route path="/medicine-list" element={<MedicineList />} /> */}
+          {/* <Route path="/divya-list" element={<Divya />} />
           <Route path="/shameema-list" element={<Shemeema />} />
           <Route path="/haseena-list" element={<Haseena />} />
-          <Route path="/ptlist" element={<PatientTable />} />
-          <Route path="/patient/:patientId" element={<PatientDetails />} />
           <Route path="/nhc/:patientId" element={<NHC />} />
           <Route path="/dhc/:patientId" element={<DHC />} />
           <Route path="/nhce/:patientId" element={<NHCE />} />
@@ -73,7 +73,7 @@ function Main({ isAuthenticated, isNurse }) {
           <Route path="/equpment/:patientId" element={<Equipment />} />
           <Route path="/medicine/:patientId" element={<Medicine />} />
           <Route path="/social/:patientId" element={<Social />} />
-          <Route path="/update-patient/:patientId" element={<UpdatePatient />} />
+          
           <Route path="/invest/:patientId" element={<INVESTIGATION />} />
           <Route path="/death/:patientId" element={<DEATH />} />
           <Route path="/update-medicines/:patientId" element={<UpdateMedicines />} />
@@ -95,7 +95,7 @@ function Main({ isAuthenticated, isNurse }) {
           <Route path="/update-investigation/:reportId" element={<UpdateINVESTIGATION />} />
           <Route path="/update-progression/:reportId" element={<UpdatePROGRESSION />} />
           <Route path="/update-social/:reportId" element={<UpdateSOCIAL />} />
-          <Route path="/update-death/:reportId" element={<UpdateDEATH />} />
+          <Route path="/update-death/:reportId" element={<UpdateDEATH />} />  */}
         </Routes>
       </div>
 

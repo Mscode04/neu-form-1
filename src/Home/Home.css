@@ -1,6 +1,20 @@
+/* === Color Theme Variables === */
+:root {
+  --lapis-lazuli: #034f73;    
+  --teal: #026773;            
+  --persian-green: #009e8c;   
+  --mint: #01b185;            
+  --cream: #fefff5;           
+  --lapis-dark: #033b52;      
+}
+
+
+
+
+
 /* General Styles */
 .HomeApp {
-  background-color: #288598;
+  background-color: var(--cream);
   min-height: 100vh;
   color: white;
   padding-bottom: 10px;
@@ -10,7 +24,7 @@
 /* Topbar Styles */
 .HomeTopbar {
   height: 30px;
-  background-color: #a8d5de13;
+  background-color: rgba(168, 213, 222, 0.07);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -20,7 +34,6 @@
   padding: 0 20px;
 }
 
-/* Drawer Styles */
 /* Drawer Styles */
 .HomeDrawer {
   position: fixed;
@@ -41,22 +54,22 @@
 }
 
 .HomeDrawerButton {
-  background-color: #288598;
+  background-color: var(--lapis-lazuli);
   color: white;
   border-radius: 8px;
-  width: 100% !important; /* Ensures full width */
+  width: 100% !important;
   margin-bottom: 10px;
   padding: 10px;
   border: none;
   cursor: pointer;
   transition: background-color 0.3s ease-in-out;
   text-align: center;
-  text-decoration: none; /* Remove underline from link */
-  display: block; /* Ensures full width for anchor tags */
+  text-decoration: none;
+  display: block;
 }
 
 .HomeDrawerButton:hover {
-  background-color: #1e506b;
+  background-color: var(--lapis-dark);
   color: #ffffff;
 }
 
@@ -64,27 +77,27 @@
   background: none;
   border: none;
   margin-right: auto;
-  color: #288598;
+  color: var(--lapis-lazuli);
   font-size: 24px;
   cursor: pointer;
   margin-bottom: 20px;
 }
 
 .drawer-content {
-  flex: 1; /* Takes up remaining space */
+  flex: 1;
 }
 
 .drawer-footer {
-  margin-top: auto; /* Pushes footer to the bottom */
+  margin-top: auto;
   text-align: center;
 }
 
 .btn-danger {
-  background-color: #dc3545; /* Red color for logout button */
+  background-color: #dc3545;
 }
 
 .btn-danger:hover {
-  background-color: #c82333; /* Darker red on hover */
+  background-color: #c82333;
 }
 
 .powered-by {
@@ -92,12 +105,13 @@
   font-size: 12px;
   color: #666;
 }
+
 /* Banner Section */
 .HomeBanner {
-  background-image: url("../assets/img/home-banner-nurse.jpg");
+  background-image: linear-gradient(135deg, var(--lapis-lazuli), var(--mint)), url("../assets/img/home-banner-nurse.jpg");
   background-size: cover;
   background-position: center;
-  height: 300px;
+  height: 150px;
   text-align: center;
   position: relative;
   display: flex;
@@ -129,62 +143,10 @@
 }
 
 .HomeBannerButton:hover {
-  background-color: #288598;
+  background-color: var(--lapis-lazuli);
   color: white;
 }
 
-/* Reports Section */
-.HomeReports {
-  
-  border-radius: 8px;
-  
-  margin: 20px;
-}
-
-.HomeReportsTitle {
-  margin-bottom: 15px;
-}
-
-.HomeReportsCards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-  gap: 15px;
-}
-
-.HomeReportCardLink {
-  text-decoration: none;
-}
-
-.HomeReportCard {
-  background-color: #77b4c0;
-  border-radius: 8px;
-  padding: 15px;
-  color: white;
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  transition: background-color 0.3s ease-in-out;
-}
-
-.HomeReportCard:hover {
-  background-color: #3b85ac;
-}
-
-.HomeReportIcon {
-  font-size: 24px;
-  color: #fff;
-}
-
-.HomeReportInfo h5 {
-  margin: 0;
-}
-.HomeReportCard img{
-  height: 60px;
-  width: 60px;
-
-  border-radius:100%;
-}
 /* Responsive Styles */
 @media (max-width: 768px) {
   .HomeDrawer {
@@ -199,9 +161,7 @@
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   }
 }
-.btn-danger{
-  background-color: brown;
-}
+
 .loading-container {
   display: flex;
   justify-content: center;
@@ -210,14 +170,19 @@
 }
 
 .loading-image {
-  width: 100px;  /* Adjust size if necessary */
+  width: 100px;
   height: auto;
 }
 
+/* Filter Section */
+.filter-section {
+  margin-bottom: 20px;
+}
+
 .filter-section select {
-  background-color: #288598; /* Matching the primary theme color */
+  background-color: var(--lapis-lazuli);
   color: white;
-  border: 2px solid #1e506b; /* Darker shade for border */
+  border: 2px solid var(--lapis-dark);
   border-radius: 8px;
   padding: 8px 12px;
   font-size: 14px;
@@ -226,12 +191,90 @@
 }
 
 .filter-section select:hover {
-  background-color: #1e506b; /* Darker shade on hover */
-  border-color: #288598;
+  background-color: var(--lapis-dark);
+  border-color: var(--lapis-lazuli);
 }
 
 .filter-section select:focus {
   outline: none;
-  border-color: #3b85ac; /* Highlight color when focused */
-  box-shadow: 0 0 5px rgba(59, 133, 172, 0.5); /* Subtle glow effect */
+  border-color: var(--mint);
+  box-shadow: 0 0 5px rgba(2, 195, 154, 0.5);
+}
+
+/* Check-In Section */
+.HomeCheckIns {
+  padding: 20px;
+}
+
+.HomeCheckInsTitle {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--teal);
+}
+
+.filter-group {
+  margin-top: 10px;
+}
+
+.filter-group label {
+  margin-right: 10px;
+  font-weight: 500;
+}
+
+.filter-group select {
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+/* Check-In Cards */
+.checkin-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.checkin-card {
+  display: flex;
+  align-items: center;
+  background-color: var(--persian-green);
+  color: white;
+  padding: 16px 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 550px;
+  transition: transform 0.2s ease-in-out;
+}
+
+.checkin-card:hover {
+  transform: scale(1.02);
+}
+
+.checkin-icon {
+  width: 50px;
+  height: 50px;
+  background: white;
+  border-radius: 50%;
+  margin-right: 15px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.checkin-icon img {
+  width: 35px;
+  height: 35px;
+}
+
+.checkin-info h5 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.checkin-info p {
+  margin: 2px 0;
+  font-size: 0.9rem;
 }

@@ -1,331 +1,403 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { db } from "../Firebase/config";
-import { collection, getDocs, query, where, doc, deleteDoc } from "firebase/firestore";
-import { Link, useNavigate } from "react-router-dom";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import "./AllReportsPage.css";
+import { collection, getDocs, query, orderBy, doc, updateDoc } from "firebase/firestore";
+import { Link } from "react-router-dom";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-const AllReportsPage = () => {
+const AllReports = () => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [nameFilter, setNameFilter] = useState("");
-  const [formTypeFilter, setFormTypeFilter] = useState("");
-  const [addressFilter, setAddressFilter] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [reportToDelete, setReportToDelete] = useState(null);
+  const recordsPerPage = 20;
   const [pin, setPin] = useState("");
-  const [sortOrder, setSortOrder] = useState("asc"); // New state for sorting order
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [currentReportId, setCurrentReportId] = useState(null);
+  const [currentAction, setCurrentAction] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all"); // 'all', 'checkedIn', 'checkedOut'
 
-  const reportsPerPage = 40;
-  const navigate = useNavigate();
-
+  const notify = (message, type = 'success') => {
+    toast[type](message, {
+      position: "top-right",
+      autoClose: 2000,  // Faster than default
+      hideProgressBar: true,  // Simpler UI for rush situations
+      closeOnClick: true,
+      pauseOnHover: false,  // Don't wait for hover
+      draggable: false,
+      progress: undefined,
+    });
+  };
+  
   useEffect(() => {
     const fetchReports = async () => {
       try {
         setLoading(true);
-        setError(null);
-  
-        const reportsRef = collection(db, "Reports");
-        let q = query(reportsRef);
-  
-        // Only apply formType filter (since it's exact match)
-        if (formTypeFilter) {
-          q = query(q, where("formType", "==", formTypeFilter));
-        }
-  
+        const q = query(collection(db, "RegisterData"), orderBy("patientname"));
         const querySnapshot = await getDocs(q);
-        let reportsData = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-  
-        // Client-side filtering for name and address (case-insensitive)
-        if (nameFilter) {
-          reportsData = reportsData.filter((report) =>
-            report.name?.toLowerCase().includes(nameFilter.toLowerCase())
-          );
-        }
-        if (addressFilter) {
-          reportsData = reportsData.filter((report) =>
-            report.address?.toLowerCase().includes(addressFilter.toLowerCase())
-          );
-        }
-  
-        // Date filtering (same as before)
-        if (startDate || endDate) {
-          const startDateObj = startDate ? new Date(startDate) : null;
-          const endDateObj = endDate ? new Date(endDate) : null;
-          if (endDateObj) {
-            endDateObj.setHours(23, 59, 59, 999);
-          }
-  
-          reportsData = reportsData.filter((report) => {
-            const submittedAtDate = new Date(report.submittedAt);
-            if (startDateObj && submittedAtDate < startDateObj) return false;
-            if (endDateObj && submittedAtDate > endDateObj) return false;
-            return true;
+        
+        const reportsData = [];
+        querySnapshot.forEach((doc) => {
+          reportsData.push({ 
+            id: doc.id, 
+            ...doc.data(),
+            eventStatus: doc.data().eventStatus || false
           });
-        }
-  
-        // Sorting (same as before)
-        reportsData.sort((a, b) => {
-          const dateA = new Date(a.submittedAt);
-          const dateB = new Date(b.submittedAt);
-          return sortOrder === "desc" ? dateA - dateB : dateB - dateA;
         });
-  
+
         setReports(reportsData);
+        notify('Data loaded successfully');
       } catch (error) {
         console.error("Error fetching reports: ", error);
-        setError("Failed to load reports. Please try again later.");
+        notify('Failed to load data', 'error');
       } finally {
         setLoading(false);
       }
     };
-  
+
     fetchReports();
-  }, [nameFilter, formTypeFilter, addressFilter, startDate, endDate, sortOrder]);
-  const handleBackClick = () => {
-    navigate(-1);
+  }, []);
+
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value.toLowerCase());
+    setCurrentPage(1);
   };
 
-  const getReportDetailsRoute = (formType, reportId) => {
-    switch (formType) {
-      case "NHC":
-        return `/main/reportsdetailnhc/${reportId}`;
-      case "NHC(E)":
-        return `/main/reportsdetailnhce/${reportId}`;
-      case "DHC":
-        return `/main/report-details-dhc/${reportId}`;
-      case "PROGRESSION REPORT":
-        return `/main/report-details-progression/${reportId}`;
-      case "SOCIAL REPORT":
-        return `/main/report-details-social/${reportId}`;
-      case "VHC":
-        return `/main/report-details-vhc/${reportId}`;
-      case "GVHC":
-        return `/main/report-details-vhc/${reportId}`;
-      case "INVESTIGATION":
-        return `/main/report-details-investigation/${reportId}`;
-      case "DEATH":
-        return `/main/report-details-death/${reportId}`;
-      default:
-        return `/main/report-details-default/${reportId}`;
-    }
+  const handleStatusFilterChange = (e) => {
+    setStatusFilter(e.target.value);
+    setCurrentPage(1);
   };
 
-  const handleDeleteClick = (reportId) => {
-    setReportToDelete(reportId);
-    setShowConfirmation(true);
-  };
+  const filteredReports = reports.filter((report) => {
+    // Apply search filter
+    const matchesSearch = 
+      report.patientname?.toLowerCase().includes(searchTerm) ||
+      report.palliativeId?.toLowerCase().includes(searchTerm) ||
+      report.place?.toLowerCase().includes(searchTerm) ||
+      report.address?.toLowerCase().includes(searchTerm);
+    
+    // Apply status filter
+    const matchesStatus = 
+      statusFilter === "all" ||
+      (statusFilter === "checkedIn" && report.eventStatus) ||
+      (statusFilter === "checkedOut" && !report.eventStatus);
+    
+    return matchesSearch && matchesStatus;
+  });
 
-  const handlePinChange = (e) => {
-    setPin(e.target.value);
-  };
-
-  const handleConfirmDelete = async () => {
-    if (pin === "2012") {
-      try {
-        await deleteDoc(doc(db, "Reports", reportToDelete));
-        setReports(reports.filter((report) => report.id !== reportToDelete));
-        setShowConfirmation(false);
-        setPin("");
-        toast.success("Report deleted successfully!");
-      } catch (error) {
-        console.error("Error deleting report: ", error);
-        toast.error("Failed to delete report.");
-      }
-    } else {
-      toast.error("Incorrect PIN.");
-    }
-  };
-
-  const handleCancelDelete = () => {
-    setShowConfirmation(false);
-    setPin("");
-  };
-
-  // Pagination logic
-  const indexOfLastReport = currentPage * reportsPerPage;
-  const indexOfFirstReport = indexOfLastReport - reportsPerPage;
-  const currentReports = reports.slice(indexOfFirstReport, indexOfLastReport);
+  // Get current records for pagination
+  const indexOfLastRecord = currentPage * recordsPerPage;
+  const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
+  const currentRecords = filteredReports.slice(indexOfFirstRecord, indexOfLastRecord);
+  const totalPages = Math.ceil(filteredReports.length / recordsPerPage);
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
+  const handleCheckInOut = (reportId, action) => {
+    setCurrentReportId(reportId);
+    setCurrentAction(action);
+    
+    if (action === 'checkin') {
+      updateReportStatus(reportId, true);
+    } else {
+      setShowPinModal(true);
+    }
+  };
+
+  const verifyPinAndCheckout = () => {
+    if (pin === "2012") {
+      updateReportStatus(currentReportId, false);
+      setShowPinModal(false);
+      setPin("");
+    } else {
+      notify('Invalid PIN', 'error');
+    }
+  };
+
+  const updateReportStatus = async (reportId, status) => {
+    try {
+      const reportRef = doc(db, "RegisterData", reportId);
+      const updateData = {
+        eventStatus: status,
+        lastUpdated: new Date().toISOString()
+      };
+      
+      if (status) {
+        updateData.checkedInAt = new Date().toISOString();
+      } else {
+        updateData.checkedOutAt = new Date().toISOString();
+      }
+      
+      await updateDoc(reportRef, updateData);
+      
+      setReports(reports.map(report => 
+        report.id === reportId ? { 
+          ...report, 
+          eventStatus: status,
+          checkedInAt: status ? new Date().toISOString() : report.checkedInAt,
+          checkedOutAt: !status ? new Date().toISOString() : report.checkedOutAt
+        } : report
+      ));
+      
+      notify(`Successfully ${status ? 'checked in' : 'checked out'}`);
+    } catch (error) {
+      console.error("Error updating report: ", error);
+      notify('Failed to update status', 'error');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="text-center mt-5">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="AllRep-container">
-      <ToastContainer
-        position="top-center"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={true}
+    <div className="container mt-4">
+        <ToastContainer
+        position="top-right"
+        autoClose={2000}
+        newestOnTop
         closeOnClick
         rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        toastStyle={{ marginTop: "20px" }}
+        pauseOnFocusLoss={false}
+        draggable={false}
       />
-
-      <button onClick={handleBackClick} className="AllRep-back-button">
-        &larr; Back
-      </button>
-      <h2 className="AllRep-heading">All Reports   ({reports.length})</h2>
-
-      {/* Filters */}
-      <div className="AllRep-filters-container">
-        <input
-          type="text"
-          value={nameFilter}
-          onChange={(e) => setNameFilter(e.target.value)}
-          placeholder="Search by Name"
-          className="AllRep-filter-input"
-        />
-        <select
-          value={formTypeFilter}
-          onChange={(e) => setFormTypeFilter(e.target.value)}
-          className="AllRep-filter-select"
-        >
-          <option value="">Select Form Type</option>
-          <option value="NHC">NHC</option>
-          <option value="NHC(E)">NHC(E)</option>
-          <option value="DHC">DHC</option>
-          <option value="PROGRESSION REPORT">Progression Report</option>
-          <option value="SOCIAL REPORT">Social Report</option>
-          <option value="VHC">VHC</option>
-          <option value="GVHC">GVHC</option>
-          <option value="INVESTIGATION">Investigation</option>
-          <option value="DEATH">Death</option>
-        </select>
-        <input
-          type="text"
-          value={addressFilter}
-          onChange={(e) => setAddressFilter(e.target.value)}
-          placeholder="Search by Address"
-          className="AllRep-filter-input"
-        />
-        <input
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          placeholder="Start Date"
-          className="AllRep-filter-input"
-        />
-        <input
-          type="date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          placeholder="End Date"
-          className="AllRep-filter-input"
-        />
-        {/* Sorting dropdown */}
-        <select
-          value={sortOrder}
-          onChange={(e) => setSortOrder(e.target.value)}
-          className="AllRep-filter-select"
-        >
-          <option value="desc">Descending</option>
-          <option value="asc">Ascending</option>
-        </select>
-      </div>
-
-      {loading ? (
-        <div className="loading-container">
-          <img
-            src="https://media.giphy.com/media/YMM6g7x45coCKdrDoj/giphy.gif"
-            alt="Loading..."
-            className="loading-image"
-          />
-        </div>
-      ) : error ? (
-        <p className="AllRep-error">{error}</p>
-      ) : reports.length === 0 ? (
-        <p className="AllRep-no-reports">No reports found.</p>
-      ) : (
-        <>
-          <div className="AllRep-reports-list">
-            {currentReports.map((report) => (
-              <div key={report.id} className="AllRep-report-item">
-                <Link
-                  to={getReportDetailsRoute(report.formType, report.id)}
-                  className="AllRep-report-link"
+      {/* PIN Verification Modal */}
+      {showPinModal && (
+        <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Enter PIN to Check Out</h5>
+                <button 
+                  type="button" 
+                  className="btn-close" 
+                  onClick={() => {
+                    setShowPinModal(false);
+                    setPin("");
+                  }}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <div className="mb-3">
+                  <label className="form-label">PIN</label>
+                  <input
+                    type="password"
+                    className="form-control"
+                    value={pin}
+                    onChange={(e) => setPin(e.target.value)}
+                    placeholder="Enter PIN"
+                  />
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={() => {
+                    setShowPinModal(false);
+                    setPin("");
+                  }}
                 >
-                  <h3 className="AllRep-report-title">{report.formType || "Report Title"} : {report.name || "No Name"}</h3>
-                  <p className="AllRep-report-date">
-                    {report.submittedAt
-                      ? new Date(report.submittedAt).toLocaleString("en-US", {
-                          weekday: "short",
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                          hour: "numeric",
-                          minute: "numeric",
-                          second: "numeric",
-                          hour12: true,
-                        })
-                      : "No date available"}
-                  </p>
-                  <p className="AllRep-report-name">{report.name || "No Name"}</p>
-                  <p className="AllRep-report-name">REPORTED BY: {report.team1 || "NOT MENTION"}</p>
-
-                  <p className="AllRep-report-name"> {report.registernumber}</p>
-                  <p className="AllRep-report-address">{report.address || "No Address"}</p>
-                </Link>
-                <button
-                  onClick={() => handleDeleteClick(report.id)}
-                  className="AllRep-delete-button"
+                  Cancel
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-primary" 
+                  onClick={verifyPinAndCheckout}
                 >
-                  Delete
+                  Verify
                 </button>
               </div>
-            ))}
+            </div>
           </div>
-
-          {/* Pagination */}
-          <div className="AllRep-pagination">
-            <button
-              onClick={() => paginate(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="AllRep-pagination-button"
-            >
-              Previous
-            </button>
-            <button
-              onClick={() => paginate(currentPage + 1)}
-              disabled={indexOfLastReport >= reports.length}
-              className="AllRep-pagination-button"
-            >
-              Next
-            </button>
-          </div>
-        </>
+        </div>
       )}
 
-      {showConfirmation && (
-        <div className="AllRep-confirmation-box">
-          <p>Enter PIN to delete the report:</p>
-          <input
-            type="password"
-            value={pin}
-            onChange={handlePinChange}
-            placeholder="Enter PIN"
-            className="AllRep-pin-input"
-          />
-          <button onClick={handleConfirmDelete} className="AllRep-confirm-button">
-            Confirm
-          </button>
-          <button onClick={handleCancelDelete} className="AllRep-cancel-button">
-            Cancel
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2>Event Management - All Reports</h2>
+          <div className="text-muted">
+            Showing {filteredReports.length} of {reports.length} total records
+            {filteredReports.length !== reports.length && (
+              <span> (filtered)</span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Search and Filters */}
+      <div className="card mb-4 shadow-sm">
+        <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+          <div>
+            <i className="bi bi-search me-2"></i>Search & Filter Reports
+          </div>
+          <button 
+            className="btn btn-sm btn-light"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            {showFilters ? (
+              <>
+                <i className="bi bi-chevron-up me-1"></i>Hide Filters
+              </>
+            ) : (
+              <>
+                <i className="bi bi-chevron-down me-1"></i>Show Filters
+              </>
+            )}
           </button>
         </div>
+        <div className="card-body">
+          <div className="row g-3">
+            <div className="col-md-8">
+              <label className="form-label">Search</label>
+              <div className="input-group">
+                <span className="input-group-text">
+                  <i className="bi bi-search"></i>
+                </span>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Search by name, ID, place, or address"
+                  value={searchTerm}
+                  onChange={handleSearch}
+                />
+              </div>
+            </div>
+            
+            {showFilters && (
+              <div className="col-md-4">
+                <label className="form-label">Status</label>
+                <select
+                  className="form-select"
+                  value={statusFilter}
+                  onChange={handleStatusFilterChange}
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="checkedIn">Checked In</option>
+                  <option value="checkedOut">Checked Out</option>
+                </select>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Reports Table */}
+      <div className="card shadow-sm">
+        <div className="card-body p-0">
+          <div className="table-responsive">
+            <table className="table table-striped table-hover mb-0">
+              <thead className="table-primary">
+                <tr>
+                  <th>ID</th>
+                  <th>Patient Name</th>
+                  <th>Ward</th>
+                  <th>Place</th>
+                  <th>Vehicle</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentRecords.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" className="text-center py-4 text-muted">
+                      <i className="bi bi-exclamation-circle me-2"></i>
+                      No reports found matching your criteria
+                    </td>
+                  </tr>
+                ) : (
+                  currentRecords.map((report) => (
+                    <tr key={report.id}>
+                      <td>{report.palliativeId || report.id}</td>
+                      <td>
+                        <Link 
+                          to={`/main/patient/${report.id}`} 
+                          className="text-decoration-none"
+                        >
+                          {report.patientname}
+                        </Link>
+                      </td>
+                      <td>{report.wardNumber || "-"}</td>
+                      <td>{report.place || "-"}</td>
+                      <td>{report.vehicle || "-"}</td>
+                      <td>
+                        <span className={`badge ${report.eventStatus ? 'bg-success' : 'bg-danger'}`}>
+                          {report.eventStatus ? 'Checked In' : 'Not Checked'}
+                        </span>
+                      </td>
+                      <td>
+                        {report.eventStatus ? (
+                          <button
+                            className="btn btn-outline-danger btn-sm"
+                            onClick={() => handleCheckInOut(report.id, 'checkout')}
+                          >
+                            Check Out
+                          </button>
+                        ) : (
+                          <button
+                            className="btn btn-outline-success btn-sm"
+                            onClick={() => handleCheckInOut(report.id, 'checkin')}
+                          >
+                            Check In
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Pagination */}
+      {filteredReports.length > recordsPerPage && (
+        <nav className="mt-4">
+          <ul className="pagination justify-content-center">
+            <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+              <button 
+                className="page-link" 
+                onClick={() => paginate(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </button>
+            </li>
+            
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
+              <li key={number} className={`page-item ${currentPage === number ? 'active' : ''}`}>
+                <button 
+                  className="page-link" 
+                  onClick={() => paginate(number)}
+                >
+                  {number}
+                </button>
+              </li>
+            ))}
+            
+            <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+              <button 
+                className="page-link" 
+                onClick={() => paginate(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </button>
+            </li>
+          </ul>
+        </nav>
       )}
     </div>
   );
 };
 
-export default AllReportsPage;
+export default AllReports;
