@@ -1,0 +1,264 @@
+/* Main container */
+.PatientTable-container {
+  padding: 20px;
+  background-color: #288598;
+  min-height: 100vh;
+}
+
+/* Search bar */
+.PatientTable-search-bar {
+  margin-bottom: 20px;
+}
+
+.PatientTable-search-bar input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+  outline: none;
+}
+
+.PatientTable-search-bar input:focus {
+  border-color: #288598;
+  box-shadow: 0 0 5px rgba(40, 133, 152, 0.5);
+}
+
+/* Patient cards grid */
+.PatientTable-patient-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+/* Individual patient card */
+.PatientTable-patient-card {
+  background-color: #fff;
+  
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.PatientTable-patient-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.PatientTable-profile-pic {
+  text-align: center;
+  padding: 20px;
+  color: #288598;
+  font-size: 50px;
+}
+.PatientTable-profile-pic img{
+  height: 40px;
+}
+.PatientTable-patient-info {
+  padding: 15px;
+  text-align: center;
+}
+
+.PatientTable-patient-info h5 {
+  margin: 0;
+  font-size: 18px;
+  color: #288598;
+}
+
+.PatientTable-patient-info p {
+  margin: 5px 0;
+  font-size: 14px;
+  color: #666;
+  word-wrap: break-word; /* Ensures long words break */
+  overflow-wrap: break-word; /* Modern alternative */
+  white-space: normal; /* Allows text to wrap */
+}
+
+
+/* Pagination */
+.PatientTable-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
+.PatientTable-total-count {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 16px;
+  color: #333;
+}
+.PatientTable-pagination-btn {
+  background-color: transparent;
+  border: 1px solid #288598;
+  background-color: #fff;
+  color: #288598;
+  padding: 8px 12px;
+  margin: 0 5px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.PatientTable-pagination-btn:hover {
+  background-color: #fff;
+  color: #174c56;
+}
+
+.PatientTable-pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.PatientTable-pagination-btn.active {
+  background-color: #fff;
+  color: #288598;
+}
+
+/* Back button */
+.PatientTable-back-button {
+  background-color: transparent;
+  border: none;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.PatientTable-back-button i {
+  margin-right: 5px;
+}
+
+.PatientTable-back-button:hover {
+  text-decoration: underline;
+}
+/* Filters container */
+/* Search and filter container */
+.PatientTable-search-filter-container {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Adds space between the search bar and the button */
+  margin-bottom: 20px;
+}
+
+/* Search bar */
+.PatientTable-search-bar {
+  flex: 1; /* Allows the search bar to take up remaining space */
+}
+
+.PatientTable-search-bar input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+  outline: none;
+}
+
+.PatientTable-search-bar input:focus {
+  border-color: #288598;
+  box-shadow: 0 0 5px rgba(40, 133, 152, 0.5);
+}
+
+/* Filter toggle button */
+.PatientTable-filter-toggle {
+  background-color: #fff;
+  border: 1px solid #288598;
+  color: #288598;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  white-space: nowrap; /* Prevents the button text from wrapping */
+}
+
+.PatientTable-filter-toggle:hover {
+  background-color: #288598;
+  color: #fff;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .PatientTable-filters {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .PatientTable-filters label {
+    width: 100%;
+  }
+}
+/* Filter toggle button */
+.PatientTable-filter-toggle {
+  background-color: #fff;
+  border: 1px solid #288598;
+  color: #288598;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.PatientTable-filter-toggle:hover {
+  background-color: #288598;
+  color: #fff;
+}
+
+/* Filter box */
+.PatientTable-filters-box {
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  padding: 15px;
+}
+
+/* Filters container */
+.PatientTable-filters {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Label styling */
+.PatientTable-filters label {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  font-weight: bold;
+  color: #288598;
+}
+
+/* Dropdown select styling */
+.PatientTable-filters select {
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.3s ease-in-out;
+  background-color: #fff;
+}
+
+.PatientTable-filters select:focus {
+  border-color: #288598;
+  box-shadow: 0 0 5px rgba(40, 133, 152, 0.5);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .PatientTable-filters {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .PatientTable-filters label {
+    width: 100%;
+  }
+}

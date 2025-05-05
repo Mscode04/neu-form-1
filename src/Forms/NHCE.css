@@ -1,0 +1,102 @@
+/* General Styles */
+.NHCAdd-container {
+  max-width: 1200px;
+  
+  padding: 20px;
+  margin: 15px;
+  font-family: Arial, sans-serif;
+  background-color: #c6e7ee;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  
+}
+
+.NHCAdd-back-btn {
+  background: none;
+  border: none;
+  color: #288598;
+  font-size: 16px;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+.NHCAdd-back-btn:hover {
+  text-decoration: underline;
+}
+
+.NHCAdd-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.NHCAdd-form h3 {
+  color: #288598;
+  margin-bottom: 10px;
+}
+
+.NHCAdd-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-weight: bold;
+  color: #333;
+}
+
+.NHCAdd-form input,
+.NHCAdd-form select,
+.NHCAdd-form textarea {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.NHCAdd-form input:focus,
+.NHCAdd-form select:focus,
+.NHCAdd-form textarea:focus {
+  border-color: #288598;
+  outline: none;
+}
+
+.NHCAdd-submit-btn {
+  background-color: #288598;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 20px;
+  
+}
+
+.NHCAdd-submit-btn:disabled {
+  background-color: #a0d1e0;
+  cursor: not-allowed;
+}
+
+.NHCAdd-submit-btn:hover:not(:disabled) {
+  background-color: #1f6f7f;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .NHCAdd-container {
+    padding: 10px;
+  }
+
+  .NHCAdd-form label {
+    font-size: 14px;
+  }
+
+  .NHCAdd-form input,
+  .NHCAdd-form select,
+  .NHCAdd-form textarea {
+    font-size: 12px;
+  }
+
+  .NHCAdd-submit-btn {
+    font-size: 14px;
+  }
+}

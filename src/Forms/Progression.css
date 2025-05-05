@@ -1,0 +1,86 @@
+.PROAdd-container {
+    max-width: 800px;
+    margin: 0 auto;
+    margin: 10px;
+    padding: 20px;
+    background-color: #288598;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .PROAdd-back-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    margin-bottom: 20px;
+  }
+  
+  .PROAdd-back-btn:hover {
+    text-decoration: underline;
+  }
+  
+  .PROAdd-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .PROAdd-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-weight: bold;
+    color: #fff;
+  }
+  
+  .PROAdd-form input,
+  .PROAdd-form select,
+  .PROAdd-form textarea {
+    padding: 10px;
+    border: 1px solid #288598;
+    border-radius: 5px;
+    font-size: 16px;
+  }
+  
+  .PROAdd-form textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+  
+  .PROAdd-submit-btn {
+    padding: 10px 20px;
+    background-color: #123137;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .PROAdd-submit-btn:disabled {
+    background-color: #a0a0a0;
+    cursor: not-allowed;
+  }
+  
+  .PROAdd-submit-btn:hover:not(:disabled) {
+    background-color: #1a5f6e;
+  }
+  
+  @media (max-width: 768px) {
+    .PROAdd-container {
+      padding: 15px;
+    }
+  
+    .PROAdd-form input,
+    .PROAdd-form select,
+    .PROAdd-form textarea {
+      font-size: 14px;
+    }
+  
+    .PROAdd-submit-btn {
+      font-size: 14px;
+    }
+  }

@@ -1,0 +1,288 @@
+/* Base Styles */
+.MedAdd-container {
+  background-color: #288598;
+  padding: 20px;
+  min-height: 100vh;
+  color: #fff;
+}
+
+.MedAdd-backButton {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+.MedAdd-backButton:hover {
+  text-decoration: underline;
+}
+
+.MedAdd-title {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 24px;
+}
+
+.MedAdd-patientInfo {
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.MedAdd-patientInfo h3 {
+  color: #fff;
+  margin-bottom: 15px;
+}
+
+.MedAdd-patientInfo p {
+  margin: 5px 0;
+}
+
+.MedAdd-existingMedicines {
+  margin-bottom: 20px;
+}
+
+.MedAdd-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #fff;
+  color: #333;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.MedAdd-table th,
+.MedAdd-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.MedAdd-table th {
+  background-color: #1f6a7a;
+  color: #fff;
+}
+
+.MedAdd-table tr:hover {
+  background-color: #f1f1f1;
+}
+
+.MedAdd-updateButton {
+  background-color: #4caf50;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.MedAdd-form {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  color: #333;
+}
+
+.MedAdd-form h3 {
+  color: #288598;
+  margin-bottom: 20px;
+  font-size: 20px;
+}
+
+.MedAdd-field {
+  margin-bottom: 15px;
+}
+
+.MedAdd-field label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #288598;
+}
+
+.MedAdd-field input,
+.MedAdd-field select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.MedAdd-field input[type="checkbox"] {
+  width: auto;
+  margin-left: 10px;
+}
+
+.MedAdd-addButton {
+  background-color: #4caf50;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+.MedAdd-addButton2 {
+  background-color: #eed202;
+  color: #000;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  margin-left: 5px;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+.MedAdd-submitButton {
+  background-color: #288598;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.MedAdd-submitButton:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* Toastify Notifications */
+.Toastify__toast-container--top-center {
+  top: 1em;
+  left: 50%;
+  transform: translateX(-50%);
+  width: auto;
+  max-width: 90%;
+}
+
+.Toastify__toast {
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 14px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.Toastify__toast--success {
+  background-color: #28a745 !important;
+}
+
+.Toastify__toast--error {
+  background-color: #dc3545 !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .MedAdd-table th,
+  .MedAdd-table td {
+      padding: 8px;
+  }
+
+  .MedAdd-field {
+      margin-bottom: 10px;
+  }
+
+  .MedAdd-addButton,
+  .MedAdd-submitButton {
+      padding: 8px 16px;
+      
+  }
+}
+
+/* Adjust table for small screens */
+@media (max-width: 500px) {
+  .MedAdd-existingMedicines {
+      overflow-x: auto;
+  }
+
+  .MedAdd-table {
+      width: 100%;
+      font-size: 12px;
+  }
+
+  .MedAdd-table th,
+  .MedAdd-table td {
+      padding: 6px;
+  }
+}
+.del-get{
+  margin-bottom: 3px;
+}
+.MedAdd-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.MedAdd-modalContent {
+  background: white;
+  color: #1f6a7a;
+  padding: 2rem;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+}
+
+.MedAdd-formGroup {
+  margin-bottom: 1rem;
+}
+
+.MedAdd-modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.MedAdd-or {
+  display: block;
+  margin: 0.5rem 0;
+  text-align: center;
+  font-style: italic;
+}
+
+
+@media (max-width: 351px) {
+  .MedAdd-existingMedicines {
+      overflow-x: auto;
+  }
+
+  .MedAdd-table {
+      width: 100%;
+      font-size: 10px; /* Reduce font size */
+  }
+
+  .MedAdd-table th,
+  .MedAdd-table td {
+      padding: 4px; /* Reduce padding */
+  }
+
+  .MedAdd-backButton {
+      font-size: 14px; /* Reduce button font size */
+  }
+
+  .MedAdd-title {
+      font-size: 20px; /* Reduce title size */
+  }
+
+  .MedAdd-addButton,
+  .MedAdd-submitButton {
+      padding: 6px 12px; /* Smaller buttons */
+      font-size: 12px;
+  }
+}

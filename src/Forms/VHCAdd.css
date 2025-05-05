@@ -1,0 +1,140 @@
+/* VHCAdd.css */
+
+.VHCAdd-container {
+    background-color: #288598;
+    color: white;
+    padding: 20px;
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+  }
+  
+  .VHCAdd-back-btn {
+    background-color: #1a5f6e00;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+  }
+  
+  .VHCAdd-back-btn:hover {
+    background-color: #144c58;
+  }
+  
+  .VHCAdd-form {
+    background-color: white;
+    color: #333;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .VHCAdd-form h2,
+  .VHCAdd-form h3,
+  .VHCAdd-form h4 {
+    color: #288598;
+  }
+  
+  .VHCAdd-form label {
+    display: block;
+    margin-bottom: 15px;
+  }
+  
+  .VHCAdd-form input[type="text"],
+  .VHCAdd-form input[type="date"],
+  .VHCAdd-form input[type="time"],
+  .VHCAdd-form textarea,
+  .VHCAdd-form select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+  }
+  
+  .VHCAdd-form input[type="checkbox"] {
+    margin-right: 10px;
+  }
+  
+  .VHCAdd-form textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+  
+  .VHCAdd-form button {
+    background-color: #288598;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 5px;
+    margin-top: 10px;
+  }
+  
+  .VHCAdd-form button:hover {
+    background-color: #1a5f6e;
+  }
+  
+  .VHCAdd-submit-btn {
+    width: 100%;
+    background-color: #1a5f6e;
+    margin-top: 20px;
+  }
+  
+  .VHCAdd-submit-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .VHCAdd-container {
+      padding: 10px;
+    }
+  
+    .VHCAdd-form {
+      padding: 15px;
+    }
+  
+    .VHCAdd-form input[type="text"],
+    .VHCAdd-form input[type="date"],
+    .VHCAdd-form input[type="time"],
+    .VHCAdd-form textarea,
+    .VHCAdd-form select {
+      font-size: 14px;
+    }
+  
+    .VHCAdd-form button {
+      font-size: 14px;
+      padding: 8px 16px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .VHCAdd-form {
+      padding: 10px;
+    }
+  
+    .VHCAdd-form label {
+      margin-bottom: 10px;
+    }
+  
+    .VHCAdd-form input[type="text"],
+    .VHCAdd-form input[type="date"],
+    .VHCAdd-form input[type="time"],
+    .VHCAdd-form textarea,
+    .VHCAdd-form select {
+      padding: 8px;
+      font-size: 12px;
+    }
+  
+    .VHCAdd-form button {
+      font-size: 12px;
+      padding: 6px 12px;
+    }
+  }
