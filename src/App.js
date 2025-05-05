@@ -59,6 +59,9 @@ function App() {
     }
   };
 
+
+
+  
   return (
     <>
       {/* Render the install button if the prompt is available */}
