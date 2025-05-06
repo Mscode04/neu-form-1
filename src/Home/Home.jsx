@@ -140,6 +140,7 @@ function Home() {
       <div className="checkin-info">
         <h5>{checkin.patientname?.toUpperCase() || "UNKNOWN"}</h5>
         <p>{new Date(checkin.checkInTime).toLocaleString()}</p>
+        <p>Reg.No: {checkin.rigisterno || "N/A"}</p>
         <p>Ward: {checkin.wardNumber || "N/A"}</p>
       </div>
     </div>
