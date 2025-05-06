@@ -9,6 +9,7 @@ const Register = () => {
   const [formData, setFormData] = useState({
     palliativeId: "",
     patientname: "",
+    age:"",
     rigisterno: "",
     address: "",
     place: "",
@@ -100,6 +101,7 @@ const Register = () => {
       setFormData({
         palliativeId: "",
         patientname: "",
+        age:"",
         rigisterno:"",
         address: "",
         place: "",
@@ -168,6 +170,16 @@ const Register = () => {
           </div>
           <div className="card-body">
             <div className="row">
+            <div className="col-md-6 mb-3">
+                <label className="form-label">Register Number</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="rigisterno"
+                  value={formData.rigisterno}
+                  onChange={handleChange}
+                />
+              </div>
               <div className="col-md-6 mb-3">
                 <label className="form-label">Patient Name</label>
                 <input
@@ -186,6 +198,17 @@ const Register = () => {
                   className="form-control"
                   name="address"
                   value={formData.address}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label">AGE</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="age"
+                  value={formData.age}
                   onChange={handleChange}
                   required
                 />
@@ -263,16 +286,7 @@ const Register = () => {
                   onChange={handleChange}
                 />
               </div>
-              <div className="col-md-6 mb-3">
-                <label className="form-label">Register Number</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  name="rigisterno"
-                  value={formData.rigisterno}
-                  onChange={handleChange}
-                />
-              </div>
+          
             </div>
           </div>
         </div>

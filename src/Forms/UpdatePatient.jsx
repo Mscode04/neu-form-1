@@ -124,16 +124,16 @@ const UpdatePatient = () => {
                 />
               </div>
               <div className="col-md-6 mb-3">
-                <label className="form-label">Palliative ID</label>
+                <label className="form-label">Register Number</label>
                 <input
                   type="text"
                   className="form-control"
-                  name="palliativeId"
-                  value={formData.palliativeId}
+                  name="rigisterno"
+                  value={formData.rigisterno}
                   onChange={handleChange}
-                  readOnly
                 />
               </div>
+           
             </div>
             <div className="row">
               <div className="col-md-6 mb-3">
@@ -213,12 +213,12 @@ const UpdatePatient = () => {
                 />
               </div>
               <div className="col-md-6 mb-3">
-                <label className="form-label">Register Number</label>
+                <label className="form-label">Age</label>
                 <input
                   type="text"
                   className="form-control"
-                  name="rigisterno"
-                  value={formData.rigisterno}
+                  name="age"
+                  value={formData.age}
                   onChange={handleChange}
                 />
               </div>

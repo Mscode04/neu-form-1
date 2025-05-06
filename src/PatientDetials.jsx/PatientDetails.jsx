@@ -119,6 +119,7 @@ const PatientDetail = () => {
               <div class="info-row"><span class="info-label">Patient ID:</span> ${patient?.palliativeId || '-'}</div>
               <div class="info-row"><span class="info-label">Reg No:</span> ${patient?.rigisterno || '-'}</div>
               <div class="info-row"><span class="info-label">Name:</span> ${patient?.patientname || '-'}</div>
+              <div class="info-row"><span class="info-label">Age:</span> ${patient?.age || '-'}</div>
               <div className="info-row">
   <span className="info-label">Status:</span>
   {patient?.status === true ? 'Checkin' : 'Not Checked'}
@@ -261,6 +262,10 @@ const PatientDetail = () => {
             <div className="info-item">
               <span className="info-label">Palliative ID:</span>
               <span className="info-value non-selectable">{patient.palliativeId}</span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">Age:</span>
+              <span className="info-value non-selectable">{patient.age}</span>
             </div>
             <div className="info-item">
               <span className="info-label">Place:</span>

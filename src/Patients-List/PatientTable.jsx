@@ -168,6 +168,7 @@ const PatientTable = () => {
     const exportData = filteredPatients.map(patient => ({
       'Reg No': patient.rigisterno || patient.id,
       'Patient Name': patient.patientname,
+      'Age': patient.age,
       'Place': patient.place || '-',
       'Address': patient.address || '-',
       'Ward Number': patient.wardNumber || '-',
