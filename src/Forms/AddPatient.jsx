@@ -9,6 +9,7 @@ const Register = () => {
   const [formData, setFormData] = useState({
     palliativeId: "",
     patientname: "",
+    rigisterno: "",
     address: "",
     place: "",
     panchayat: "MAKKARAPARAMBA",
@@ -99,6 +100,7 @@ const Register = () => {
       setFormData({
         palliativeId: "",
         patientname: "",
+        rigisterno:"",
         address: "",
         place: "",
         panchayat: "",
@@ -258,6 +260,16 @@ const Register = () => {
                   className="form-control"
                   name="medicine"
                   value={formData.medicine}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Register Number</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="rigisterno"
+                  value={formData.rigisterno}
                   onChange={handleChange}
                 />
               </div>

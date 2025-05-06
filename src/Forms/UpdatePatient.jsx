@@ -212,6 +212,16 @@ const UpdatePatient = () => {
                   onChange={handleChange}
                 />
               </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Register Number</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="rigisterno"
+                  value={formData.rigisterno}
+                  onChange={handleChange}
+                />
+              </div>
             </div>
           </div>
         </div>

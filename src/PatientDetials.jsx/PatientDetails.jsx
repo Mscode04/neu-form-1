@@ -33,97 +33,143 @@ const PatientDetail = () => {
   }, [id]);
 
   const handlePrint = () => {
-    const printWindow = window.open('', '', 'width=800,height=600');
+    const printWindow = window.open('', '', 'width=1024,height=768');
     printWindow.document.write(`
       <html>
         <head>
-          <title>Patient Report - ${patient?.palliativeId || id}</title>
           <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            .report-header { 
-              background-color: #034f73; 
-              color: white; 
-              padding: 20px; 
-              text-align: center; 
-              margin-bottom: 20px;
+            @page {
+              size: A4 landscape;
+              margin: 10mm;
             }
-            .patient-info { margin-bottom: 30px; }
-            .section { 
-              margin-bottom: 20px; 
-              border-bottom: 1px solid #ddd; 
-              padding-bottom: 15px;
+            body { 
+              font-family: Arial, sans-serif; 
+              margin: 0;
+              padding: 10px;
+              font-size: 12px;
             }
-            .section h4 { 
-              color: #034f73; 
-              border-bottom: 2px solid #009e8c; 
-              padding-bottom: 5px;
+            .report-container {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 15px;
             }
-            .info-row { display: flex; margin-bottom: 8px; }
-            .info-label { font-weight: bold; width: 200px; }
-            .print-footer { 
-              text-align: center; 
-              margin-top: 30px; 
-              font-size: 12px; 
+            .header {
+              width: 100%;
+              background-color: #034f73;
+              color: white;
+              padding: 10px;
+              text-align: center;
+              margin-bottom: 10px;
+              border-radius: 5px;
+            }
+            .card {
+              flex: 1 1 45%;
+              min-width: 300px;
+              border: 1px solid #ddd;
+              border-radius: 5px;
+              padding: 10px;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+              page-break-inside: avoid;
+            }
+            .card-title {
+              background-color: #009e8c;
+              color: white;
+              padding: 5px 10px;
+              margin: -10px -10px 10px -10px;
+              border-radius: 5px 5px 0 0;
+              font-weight: bold;
+            }
+            .info-row {
+              display: flex;
+              margin-bottom: 5px;
+            }
+            .info-label {
+              font-weight: bold;
+              min-width: 120px;
+            }
+            .footer {
+              width: 100%;
+              text-align: center;
+              margin-top: 10px;
+              font-size: 10px;
               color: #666;
             }
-            @page { size: auto; margin: 10mm; }
+            .qr-code-placeholder {
+              width: 80px;
+              height: 80px;
+              border: 1px dashed #ccc;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              float: right;
+              margin-left: 10px;
+              font-size: 10px;
+              color: #999;
+            }
           </style>
         </head>
         <body>
-          <div class="report-header">
-            <h2>Palliative Care Patient Report</h2>
-            <h3>${patient?.patientname || 'Patient'}</h3>
-            <p>ID: ${patient?.palliativeId || id} | Date: ${new Date().toLocaleDateString()}</p>
+          <div class="header">
           </div>
           
-          <div class="patient-info">
-            <div class="section">
-              <h4>Basic Information</h4>
-              <div class="info-row"><span class="info-label">Patient Name:</span> ${patient?.patientname || '-'}</div>
-              <div class="info-row"><span class="info-label">Palliative ID:</span> ${patient?.palliativeId || '-'}</div>
+          <div class="report-container">
+            <!-- Basic Information Card -->
+            <div class="card">
+              <div class="card-title">BASIC INFORMATION</div>
+              <div class="info-row"><span class="info-label">Patient ID:</span> ${patient?.palliativeId || '-'}</div>
+              <div class="info-row"><span class="info-label">Reg No:</span> ${patient?.rigisterno || '-'}</div>
+              <div class="info-row"><span class="info-label">Name:</span> ${patient?.patientname || '-'}</div>
+              <div className="info-row">
+  <span className="info-label">Status:</span>
+  {patient?.status === true ? 'Checkin' : 'Not Checked'}
+</div>
+
               <div class="info-row"><span class="info-label">Address:</span> ${patient?.address || '-'}</div>
               <div class="info-row"><span class="info-label">Place:</span> ${patient?.place || '-'}</div>
               <div class="info-row"><span class="info-label">Panchayat:</span> ${patient?.panchayat || '-'}</div>
-              <div class="info-row"><span class="info-label">Ward Number:</span> ${patient?.wardNumber || '-'}</div>
+              <div class="info-row"><span class="info-label">Ward No:</span> ${patient?.wardNumber || '-'}</div>
             </div>
-
-            <div class="section">
-              <h4>Care Requirements</h4>
-              <div class="info-row"><span class="info-label">Equipment Needed:</span> ${patient?.equipmentRequired || '-'}</div>
-              <div class="info-row"><span class="info-label">Medicine Requirements:</span> ${patient?.medicine || '-'}</div>
-              <div class="info-row"><span class="info-label">Food Requirements:</span> ${patient?.food || '-'}</div>
+            
+            <!-- Contact Information Card -->
+            <div class="card">
+              <div class="card-title">CONTACT INFORMATION</div>
+              <div class="info-row"><span class="info-label">Bystander Name:</span> ${patient?.bystander?.name || '-'}</div>
+              <div class="info-row"><span class="info-label">Phone 1:</span> ${patient?.bystander?.phone1 || '-'}</div>
+              <div class="info-row"><span class="info-label">Phone 2:</span> ${patient?.bystander?.phone2 || '-'}</div>
+              <div class="info-row"><span class="info-label">People With:</span> Adults: ${patient?.peopleWithYou?.adults || 0}, Children: ${patient?.peopleWithYou?.children || 0}</div>
+              <div class="info-row"><span class="info-label">Remarks:</span> ${patient?.remarks || '-'}</div>
             </div>
-
-            <div class="section">
-              <h4>Transportation</h4>
+            
+            <!-- Care Requirements Card -->
+            <div class="card">
+              <div class="card-title">CARE REQUIREMENTS</div>
+              <div class="info-row"><span class="info-label">Equipment:</span> ${patient?.equipmentRequired || '-'}</div>
+              <div class="info-row"><span class="info-label">Medicine:</span> ${patient?.medicine || '-'}</div>
+              <div class="info-row"><span class="info-label">Food:</span> ${patient?.food || '-'}</div>
+            </div>
+            
+            <!-- Transportation Card -->
+            <div class="card">
+              <div class="card-title">TRANSPORTATION</div>
               <div class="info-row"><span class="info-label">Vehicle:</span> ${patient?.vehicle || '-'}</div>
               <div class="info-row"><span class="info-label">Leaving Time:</span> ${patient?.leavingTime || '-'}</div>
             </div>
-
-            <div class="section">
-              <h4>Contacts</h4>
-              <div class="info-row"><span class="info-label">Bystander Name:</span> ${patient?.bystander?.name || '-'}</div>
-              <div class="info-row"><span class="info-label">Bystander Phone 1:</span> ${patient?.bystander?.phone1 || '-'}</div>
-              <div class="info-row"><span class="info-label">Bystander Phone 2:</span> ${patient?.bystander?.phone2 || '-'}</div>
+            
+            <!-- Care Team Card -->
+            <div class="card">
+              <div class="card-title">CARE TEAM</div>
+              <div class="info-row"><span class="info-label">Patient Volunteer:</span> ${patient?.patientVolunteer?.name || '-'}</div>
+              <div class="info-row"><span class="info-label">Phone:</span> ${patient?.patientVolunteer?.phone || '-'}</div>
+              <div class="info-row"><span class="info-label">Incharge Volunteer:</span> ${patient?.inchargeVolunteer?.name || '-'}</div>
+              <div class="info-row"><span class="info-label">Phone:</span> ${patient?.inchargeVolunteer?.phone || '-'}</div>
+              <div class="info-row"><span class="info-label">Ward Coordinator:</span> ${patient?.wardCoordinator?.name || '-'}</div>
+              <div class="info-row"><span class="info-label">Phone:</span> ${patient?.wardCoordinator?.phone || '-'}</div>
             </div>
-
-            <div class="section">
-              <h4>Care Team</h4>
-              <div class="info-row"><span class="info-label">Patient Volunteer:</span> ${patient?.patientVolunteer?.name || '-'} (${patient?.patientVolunteer?.phone || '-'})</div>
-              <div class="info-row"><span class="info-label">Incharge Volunteer:</span> ${patient?.inchargeVolunteer?.name || '-'} (${patient?.inchargeVolunteer?.phone || '-'})</div>
-              <div class="info-row"><span class="info-label">Ward Coordinator:</span> ${patient?.wardCoordinator?.name || '-'} (${patient?.wardCoordinator?.phone || '-'})</div>
-            </div>
-
-            <div class="section">
-              <h4>Additional Information</h4>
-              <div class="info-row"><span class="info-label">People With Patient:</span> Adults: ${patient?.peopleWithYou?.adults || 0}, Children: ${patient?.peopleWithYou?.children || 0}</div>
-              <div class="info-row"><span class="info-label">Remarks:</span> ${patient?.remarks || '-'}</div>
-            </div>
+            
+            
           </div>
-
-          <div class="print-footer">
-            <p>Generated on ${new Date().toLocaleString()} | Palliative Care Management System</p>
-          </div>
+          
+         
         </body>
       </html>
     `);
@@ -205,7 +251,7 @@ const PatientDetail = () => {
       <div className="patient-card">
         <div className="section basic-info">
           <h3 className="section-title">
-            <i className="bi bi-person-circle"></i> Basic Information
+            <i className="bi bi-person-circle"></i>Reg:  {patient.rigisterno || '-'}
           </h3>
           <div className="info-grid">
             <div className="info-item">

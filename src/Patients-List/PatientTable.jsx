@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { db } from "../Firebase/config";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { Link } from "react-router-dom";
+import * as XLSX from 'xlsx'
 import './PatientTable.css'
 
 const PatientTable = () => {
@@ -32,7 +33,7 @@ const PatientTable = () => {
     patientVolunteer: ""
   });
   const [currentPage, setCurrentPage] = useState(1);
-  const recordsPerPage = 1;
+  const recordsPerPage = 20;
 
   useEffect(() => {
     const fetchPatientsAndOptions = async () => {
@@ -120,13 +121,15 @@ const PatientTable = () => {
 
   const filteredPatients = patients.filter((patient) => {
     const matchesSearch = 
-      patient.patientname?.toLowerCase().includes(searchTerm) ||
-      patient.palliativeId?.toLowerCase().includes(searchTerm) ||
-      patient.place?.toLowerCase().includes(searchTerm) ||
-      patient.address?.toLowerCase().includes(searchTerm) ||
-      patient.bystander?.phone1?.includes(searchTerm) ||
-      patient.bystander?.phone2?.includes(searchTerm) ||
-      patient.wardCoordinator?.phone?.includes(searchTerm);
+    patient.patientname?.toLowerCase().includes(searchTerm) ||
+    patient.palliativeId?.toLowerCase().includes(searchTerm) ||
+    patient.rigisterno?.toLowerCase().includes(searchTerm) || // 👈 added line
+    patient.place?.toLowerCase().includes(searchTerm) ||
+    patient.address?.toLowerCase().includes(searchTerm) ||
+    patient.bystander?.phone1?.includes(searchTerm) ||
+    patient.bystander?.phone2?.includes(searchTerm) ||
+    patient.wardCoordinator?.phone?.includes(searchTerm);
+  
     
     const matchesFilter = 
       (filter.wardNumber === "" || patient.wardNumber === filter.wardNumber) &&
@@ -160,7 +163,197 @@ const PatientTable = () => {
       </div>
     );
   }
+  const exportToExcel = () => {
+    // Prepare data for export
+    const exportData = filteredPatients.map(patient => ({
+      'Reg No': patient.rigisterno || patient.id,
+      'Patient Name': patient.patientname,
+      'Place': patient.place || '-',
+      'Address': patient.address || '-',
+      'Ward Number': patient.wardNumber || '-',
+      'Panchayat': patient.panchayat || '-',
+      'Equipment Required': patient.equipmentRequired || 'None',
+      'Vehicle': patient.vehicle || '-',
+      'Food': patient.food || '-',
+      'Medicine': patient.medicine || '-',
+      'Contact 1': patient.bystander?.phone1 || '-',
+      'Contact 2': patient.bystander?.phone2 || '-',
+      'Ward Coordinator': patient.wardCoordinator?.name || '-',
+      'Ward Coordinator Phone': patient.wardCoordinator?.phone || '-',
+      'Incharge Volunteer': patient.inchargeVolunteer?.name || '-',
+      'Incharge Volunteer Phone': patient.inchargeVolunteer?.phone || '-',
+      'Patient Volunteer': patient.patientVolunteer?.name || '-',
+      'Patient Volunteer Phone': patient.patientVolunteer?.phone || '-',
+      'Remarks': patient.remarks || '-',
+      'Status': patient.status || '-'
+    }));
 
+    // Create worksheet
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Patients");
+    
+    // Generate file name with current date
+    const date = new Date().toISOString().split('T')[0];
+    let fileName = `Patient_Records_${date}`;
+    
+    // Add filter info to filename if any filter is active
+    const activeFilters = Object.entries(filter).filter(([_, value]) => value !== "");
+    if (activeFilters.length > 0 || searchTerm) {
+      fileName += '_Filtered';
+    }
+    
+    // Export the workbook
+    XLSX.writeFile(wb, `${fileName}.xlsx`);
+  };
+
+
+  const handlePrint = () => {
+    const printWindow = window.open('', '', 'width=1000,height=600');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Patient Records</title>
+          <style>
+            @page {
+              size: landscape;
+              margin: 10mm;
+            }
+            body {
+              font-family: Arial, sans-serif;
+              margin: 20px;
+            }
+            h1 {
+              text-align: center;
+              margin-bottom: 20px;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 20px;
+            }
+            th, td {
+              border: 1px solid #ddd;
+              padding: 8px;
+              text-align: left;
+              font-size: 12px;
+            }
+            th {
+              background-color: #f2f2f2;
+              position: sticky;
+              top: 0;
+            }
+            .filter-info {
+              margin-bottom: 15px;
+              font-size: 14px;
+              color: #555;
+            }
+            .print-date {
+              text-align: right;
+              margin-bottom: 10px;
+              font-size: 12px;
+              color: #777;
+            }
+          </style>
+        </head>
+        <body>
+          <h1>Patient Records</h1>
+          <div class="print-date">Printed on: ${new Date().toLocaleString()}</div>
+          ${getFilterInfo()}
+          ${getPrintableTable()}
+        </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 500);
+  };
+
+  // Helper function to generate filter information
+  const getFilterInfo = () => {
+    const activeFilters = Object.entries(filter).filter(([_, value]) => value !== "");
+    let filterInfo = '';
+    
+    if (activeFilters.length > 0 || searchTerm) {
+      filterInfo = '<div class="filter-info"><strong>Filters Applied:</strong><ul>';
+      
+      if (searchTerm) {
+        filterInfo += `<li>Search: "${searchTerm}"</li>`;
+      }
+      
+      activeFilters.forEach(([key, value]) => {
+        filterInfo += `<li>${key}: ${value}</li>`;
+      });
+      
+      filterInfo += '</ul></div>';
+    }
+    
+    return filterInfo;
+  };
+
+  // Helper function to generate printable table HTML
+  const getPrintableTable = () => {
+    return `
+      <table>
+        <thead>
+          <tr>
+            <th>Reg No</th>
+            <th>Patient Name</th>
+            <th>Place</th>
+            <th>Address</th>
+            <th>Ward Number</th>
+            <th>Panchayat</th>
+            <th>Equipment Required</th>
+            <th>Vehicle</th>
+            <th>Food</th>
+            <th>Medicine</th>
+            <th>Contact 1</th>
+            <th>Contact 2</th>
+            <th>Ward Coordinator</th>
+            <th>Ward Coordinator Phone</th>
+            <th>Incharge Volunteer</th>
+            <th>Incharge Volunteer Phone</th>
+            <th>Patient Volunteer</th>
+            <th>Patient Volunteer Phone</th>
+            <th>Palliative ID</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filteredPatients.map(patient => `
+            <tr>
+              <td>${patient.rigisterno || patient.id || '-'}</td>
+              <td>${patient.patientname || '-'}</td>
+              <td>${patient.place || '-'}</td>
+              <td>${patient.address || '-'}</td>
+              <td>${patient.wardNumber || '-'}</td>
+              <td>${patient.panchayat || '-'}</td>
+              <td>${patient.equipmentRequired || 'None'}</td>
+              <td>${patient.vehicle || '-'}</td>
+              <td>${patient.food || '-'}</td>
+              <td>${patient.medicine || '-'}</td>
+              <td>${patient.bystander?.phone1 || '-'}</td>
+              <td>${patient.bystander?.phone2 || '-'}</td>
+              <td>${patient.wardCoordinator?.name || '-'}</td>
+              <td>${patient.wardCoordinator?.phone || '-'}</td>
+              <td>${patient.inchargeVolunteer?.name || '-'}</td>
+              <td>${patient.inchargeVolunteer?.phone || '-'}</td>
+              <td>${patient.patientVolunteer?.name || '-'}</td>
+              <td>${patient.patientVolunteer?.phone || '-'}</td>
+              <td>${patient.palliativeId || '-'}</td>
+              <td>${patient.status || '-'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      <div>Total Records: ${filteredPatients.length}</div>
+    `;
+  };  
   return (
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
@@ -184,6 +377,20 @@ const PatientTable = () => {
             )}
           </div>
         </div> */}
+           <button 
+            onClick={handlePrint} 
+            className="btn btn-secondary me-2"
+            disabled={filteredPatients.length === 0}
+          >
+            <i className="bi bi-printer me-2"></i>Print
+          </button>
+            <button 
+            onClick={exportToExcel} 
+            className="btn btn-primary"
+            disabled={filteredPatients.length === 0}
+          >
+            <i className="bi bi-file-earmark-excel "></i>Export to Excel
+          </button>
         <Link to="/main/addpt" className="btn btn-primary">
           <i className="bi bi-plus-circle me-2"></i>Add New Patient
         </Link>
@@ -222,7 +429,7 @@ const PatientTable = () => {
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Search by name, ID, place, address, or phone number"
+                  placeholder="Search by name, ID, place, address, Reg No, or phone number"
                   value={searchTerm}
                   onChange={handleSearch}
                 />
@@ -379,7 +586,7 @@ const PatientTable = () => {
             <table className="table table-striped table-hover mb-0">
               <thead className="table-primary">
                 <tr>
-                  <th>ID</th>
+                  <th>Reg.no</th>
                   <th>Patient Name</th>
                   <th>Place</th>
                  
@@ -406,7 +613,7 @@ const PatientTable = () => {
                           to={`/main/patient/${patient.id}`} 
                           className="text-decoration-none fw-bold text-primary"
                         >
-                          {patient.palliativeId || patient.id}
+                          {patient.rigisterno || patient.id}
                         </Link>
                       </td>
                       <td>
